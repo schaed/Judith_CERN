@@ -1,0 +1,16 @@
+Calculates the cuts to be applied to the T0, Charge and Timing variables
+The function to call is 
+
+    int optimizeCuts(...)
+
+defined in optimizedCuts.C.
+The full arguments list is
+
+    int optimizeCuts(const char *fileNameIn, // name of the input root file
+                     const string outputFolder, // name of the output folder (must exist already)
+		     const string flag, // flag for the output plot names
+		     const bool holdPlots = false){ // leaves the TCanvas open at the end of the script
+
+Define flags that may be modified:
+       #define T0CUTNSIGMA 3. // number of sigmas for T0 cut
+       #define TIMINGCUTFRACTION 0.01 // fractional area for Timing cut
