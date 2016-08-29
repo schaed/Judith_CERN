@@ -111,7 +111,9 @@ Event* StorageIO::readEvent(Long64_t n)
       //	<< std::endl;
 	//	<< " hit: " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
       if(_numPlanes==1 && bHitIsHit && bHitValidFit && (hitIsHit[nhit]<0.5 || hitValidFit[nhit]<0.5)) continue;
-      if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.005 && hitT0[nhit]>180.0 && hitT0[nhit]<240.0 && hitTiming[nhit]<100.0)) continue;
+      //if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.005 && hitT0[nhit]>180.0 && hitT0[nhit]<240.0 && hitTiming[nhit]<100.0)) continue;
+      // Run 804
+      if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.003 && hitT0[nhit]>2-0.0 && hitT0[nhit]<280.0 && hitTiming[nhit]>15.0 && hitTiming[nhit]<60.0)) continue;      
       //std::cout << "pass " << std::endl;
       Hit* hit = event->newHit(nplane);
       hit->setPix(hitPixX[nhit], hitPixY[nhit]);
@@ -127,6 +129,8 @@ Event* StorageIO::readEvent(Long64_t n)
       if(bHitChi2) hit->setChi2(hitChi2[nhit]);
       if(bHitIsHit) hit->setIsHit(int(hitIsHit[nhit]));
       if(bHitValidFit) hit->setValidFit(int(hitValidFit[nhit]));
+      if(bHitLowFreqFFT) hit->setLowFreqFFT(int(hitLowFreqFFT[nhit]));
+      if(bHitLowFreqFFTPhase) hit->setLowFreqFFTPhase(int(hitLowFreqFFTPhase[nhit]));            
 
       // If this hit is in a cluster, mark this (and the clusters tree is active)
       if (_clusters.at(nplane) && hitInCluster[nhit] >= 0)
@@ -214,6 +218,8 @@ void StorageIO::writeEvent(Event* event)
       hitInCluster[nhit] = hit->getCluster() ? hit->getCluster()->getIndex() : -1;
       hitIsHit[nhit] = hit->getIsHit() ? 1.0: 0.0;
       hitValidFit[nhit] = hit->getValidFit() ? 1.0: 0.0; 
+      hitLowFreqFFT[nhit] = hit->getLowFreqFFT();
+      hitLowFreqFFTPhase[nhit] = hit->getLowFreqFFTPhase();
       hitChi2[nhit] = hit->getChi2();
       //if(!hit->getIsHit() || !hit->getValidFit()) { plane->removeHit(nhit); --nhit; }//bHitIsHit
     }
@@ -308,6 +314,8 @@ StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes
       
       hits->Branch("IsHit", hitIsHit, "HitIsHit[NHits]/D");
       hits->Branch("ValidFit", hitValidFit, "HitValidFit[NHits]/D");
+      hits->Branch("LowFreqFFT", hitLowFreqFFT, "HitLowFreqFFT[NHits]/D");
+      hits->Branch("LowFreqFFTPhase", hitLowFreqFFTPhase, "HitLowFreqFFTPhase[NHits]/D");            
       hits->Branch("Chi2", hitChi2, "HitChi2[NHits]/D");      
 
       clusters->Branch("NClusters", &numClusters, "NClusters/I");
@@ -444,6 +452,10 @@ StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes
 	else bHitIsHit=NULL;
         if(hits->GetBranch("ValidFit")) hits->SetBranchAddress("ValidFit", hitValidFit, &bHitValidFit);
 	else bHitValidFit=NULL;
+        if(hits->GetBranch("LowFreqFFT")) hits->SetBranchAddress("LowFreqFFT", hitLowFreqFFT, &bHitLowFreqFFT);
+	else bHitLowFreqFFT=NULL;
+        if(hits->GetBranch("LowFreqFFTPhase")) hits->SetBranchAddress("LowFreqFFTPhase", hitLowFreqFFTPhase, &bHitLowFreqFFTPhase);
+	else bHitLowFreqFFTPhase=NULL;
       }
 
       if (clusters)
