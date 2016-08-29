@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 using namespace std;
 
 #include <TFile.h>
@@ -19,12 +20,19 @@ using namespace std;
 #include <TPaveStats.h>
 #include <TError.h>
 #include <TPad.h>
+#include <TGraph.h>
+#include <TVirtualFFT.h>
 
-#define MAX_HITS 3
+#define BC 25. // bunch crossing time, BC = 25 ns
+#define MAX_HITS 3 // number of channels stored in the raw data file
+#define CHI2LIMITLOW 0.1 // reduced chi2 lower limit for considering a fit as good
+#define CHI2LIMITHIGH 10 // reduced chi2 higher limit for considering a fit as good
+#define CHARGEFFTFREQCONVERSION 0.008 // constant parameter used to determine the optimal frequency cut for FFT filtering the charge distributions
+#define HIGHSTATISTICSLIMIT 10000 // minimum number of events for considering the run as a high statistics one
 
-#define T0NBINS 100
-#define T0MIN 100.
-#define T0MAX 300.
+#define T0NBINS 400
+#define T0MIN -10
+#define T0MAX 800.
 #define T0FITRANGELOW 180.
 #define T0FITRANGEHIGH 240.
 #define T0NPAR 6
@@ -50,19 +58,25 @@ using namespace std;
 #define T0LEGENDYLOW 0.78
 #define T0LEGENDXHIGH 0.89
 #define T0LEGENDYHIGH 0.89
-#define T0STATSXLOW  0.13
-#define T0STATSYLOW 0.56
-#define T0STATSXHIGH 0.42
-#define T0STATSYHIGH 0.88
-#define T0RESULTSXLOW  0.13
-#define T0RESULTSYLOW 0.44
-#define T0RESULTSXHIGH 0.42
-#define T0RESULTSYHIGH 0.54
-#define T0CUTNSIGMA 3.
+#define T0STATSXLOW  0.60
+#define T0STATSYLOW 0.44
+#define T0STATSXHIGH 0.89
+#define T0STATSYHIGH 0.76
+#define T0RESULTSXLOW  0.60
+#define T0RESULTSYLOW 0.32
+#define T0RESULTSXHIGH 0.89
+#define T0RESULTSYHIGH 0.42
+#define T0CUTNSIGMA 3. // number of sigmas for T0 cut
 
 #define CHARGENBINS 500
 #define CHARGEMIN 0.
 #define CHARGEMAX 0.5
+#define CHARGECUTTYPE 0 // 0: from crossing point between charge sharing curve and signal distribution curve, other types not defined yet
+#define CHARGEFITRANGEFINDINGALGORITHM 1 // 0: from rebinned histogram, 1: from FFT filtered histogram
+#define CHARGELEGENDXLOW 0.52
+#define CHARGELEGENDYLOW 0.73
+#define CHARGELEGENDXHIGH 0.89
+#define CHARGELEGENDYHIGH 0.89
 #define CHARGEFITRANGELOW 0.015
 #define CHARGEFITRANGEHIGH 0.25
 #define CHARGENPAR 5
@@ -98,10 +112,16 @@ using namespace std;
 #define TIMINGNBINS 100
 #define TIMINGMIN 0.
 #define TIMINGMAX 50.
-#define TIMINGLEGENDXLOW 0.58
+#define TIMINGLEGENDXLOW 0.52
 #define TIMINGLEGENDYLOW 0.78
 #define TIMINGLEGENDXHIGH 0.89
 #define TIMINGLEGENDYHIGH 0.89
+#define TIMINGNQUANTILES 1000
+#define TIMINGCUTFRACTION 0.01 // fractional area for Timing cut
+#define TIMINGRESULTSXLOW  0.52
+#define TIMINGRESULTSYLOW 0.70
+#define TIMINGRESULTSXHIGH 0.89
+#define TIMINGRESULTSYHIGH 0.75
 
 #define CANVASSIZE 1000.
 #define LEGENDLINECOLOR 0
@@ -120,9 +140,12 @@ TH1F **allocateH1Array(const unsigned int nH1,
 		       const double xMin,
 		       const double xMax,
 		       const char *xTitle,
-		       const unsigned int color){
+		       const char *yTitle,
+		       const unsigned int color,
+		       ofstream &logfile){
 
   cout << " - allocating H1 array " << endl;
+  logfile << "\t- in function allocateH1Array()" << endl;
   
   TH1F **h1 = new TH1F*[nH1];
   for(unsigned int iH1=0; iH1<nH1; iH1++){
@@ -134,6 +157,8 @@ TH1F **allocateH1Array(const unsigned int nH1,
 		       nBinsX, xMin, xMax);
     h1[iH1] -> SetLineColor(1);
     h1[iH1] -> GetXaxis() -> SetTitle(xTitle);
+    h1[iH1] -> GetYaxis() -> SetTitle(yTitle);
+    h1[iH1] -> GetYaxis() -> SetTitleOffset(1.4);
     h1[iH1] -> SetFillColor(color);
     h1[iH1] -> SetDirectory(0);
   }
@@ -157,9 +182,11 @@ TH2F **allocateH2Array(const unsigned int nH2,
 		       const unsigned int nBinsY,
 		       const double yMin,
 		       const double yMax,
-		       const char *yTitle){
+		       const char *yTitle,
+		       ofstream &logfile){
 
   cout << " - allocating H2 array " << endl;
+  logfile << "\t- in function allocateH2Array()" << endl;
   
   TH2F **h2 = new TH2F*[nH2];
   for(unsigned int iH2=0; iH2<nH2; iH2++){
@@ -187,9 +214,11 @@ TH2F **allocateH2Array(const unsigned int nH2,
 TF1 **allocateFArray(const unsigned int nF,
 		     const char *expr,
 		     const double rangeLow,
-		     const double rangeHigh){
+		     const double rangeHigh,
+		     ofstream &logfile){
 
   cout << " - allocating F array " << endl;
+  logfile << "\t- in function allocateFArray()" << endl;
 
   TF1 **f = new TF1*[nF];
   for(unsigned int iF=0; iF<nF; iF++){
@@ -215,9 +244,11 @@ TCanvas **allocateCanvasArray(const unsigned int nCC,
 			      const double widthY,
 			      const bool logX,
 			      const bool logY,
-			      const bool logZ){
+			      const bool logZ,
+			      ofstream &logfile){
 
   cout << " - allocating Canvas array " << endl;
+  logfile << "\t- in function allocateCanvasArray()" << endl;
 
   TCanvas **cc = new TCanvas*[nCC];
   for(unsigned int iCC=0; iCC<nCC; iCC++){
@@ -241,9 +272,11 @@ TCanvas **allocateCanvasArray(const unsigned int nCC,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void deleteFArray(const unsigned int nF, 
-		  TF1 **f){
+		  TF1 **f,
+		  ofstream &logfile){
 
   cout << " - deleting F array " << endl;
+  logfile << "\t- in function deleteFArray()" << endl;
 
   for(unsigned int iF=0; iF<nF; iF++){
     delete f[iF];
@@ -259,9 +292,11 @@ void deleteFArray(const unsigned int nF,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void deleteH1Array(const unsigned int nH1, 
-		   TH1F **h1){
+		   TH1F **h1,
+		   ofstream &logfile){
 
   cout << " - deleting H1 array " << endl;
+  logfile << "\t- in function deleteH1Array()" << endl;
 
   for(unsigned int iH1=0; iH1<nH1; iH1++){
     delete h1[iH1];
@@ -277,9 +312,11 @@ void deleteH1Array(const unsigned int nH1,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void deleteH2Array(const unsigned int nH2, 
-		   TH2F **h2){
+		   TH2F **h2,
+		   ofstream &logfile){
 
   cout << " - deleting H2 array " << endl;
+  logfile << "\t- in function deleteH2Array()" << endl;
 
   for(unsigned int iH2=0; iH2<nH2; iH2++){
     delete h2[iH2];
@@ -295,9 +332,11 @@ void deleteH2Array(const unsigned int nH2,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void deleteCanvasArray(const unsigned int nCC, 
-		       TCanvas **cc){
+		       TCanvas **cc,
+		       ofstream &logfile){
 
   cout << " - deleting Canvas array " << endl;
+  logfile << "\t- in function deleteCanvasArray()" << endl;
 
   for(unsigned int iCC=0; iCC<nCC; iCC++){
     delete cc[iCC];
@@ -312,13 +351,19 @@ void deleteCanvasArray(const unsigned int nCC,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void setTimingCuts(double *cut_Timing){ 
+void setTimingCuts(double *cut_Timing,
+		   ofstream &logfile){ 
 
   cout << " - setting timing cuts " << endl;
+  logfile << "\t- in function setTimingCuts()" << endl;
 
-  cut_Timing[0] = 15.;
-  cut_Timing[1] = 10.;
-  cut_Timing[2] = 15.;
+  //  cut_Timing[0] = 15.;
+  //  cut_Timing[1] = 10.;
+  //  cut_Timing[2] = 15.;
+
+  cut_Timing[0] = 5.;
+  cut_Timing[1] = 5.;
+  cut_Timing[2] = 5.;
 
   return ;
 }
@@ -335,16 +380,46 @@ void setFunctionParameters(const unsigned int nHits,
 			   double *par, 
 			   string *parName, 
 			   double *parLimitLow, 
-			   double *parLimitHigh){
+			   double *parLimitHigh,
+			   ofstream &logfile){
 
   cout << " - setting function parameters " << endl;
+  logfile << "\t\t- in function setFunctionParameters()" << endl;
 
   for(unsigned int iHit=0; iHit<nHits; iHit++){
+    logfile << "\t\t- hit " << iHit << ":" << endl;
     for(unsigned int iPar=0; iPar<nPar; iPar++){
       f[iHit] -> SetParameter(iPar, par[iPar]);
       f[iHit] -> SetParName(iPar, parName[iPar].c_str());
       f[iHit] -> SetParLimits(iPar, parLimitLow[iPar], parLimitHigh[iPar]);
+      logfile << "\t\t\t- parameter " << iPar
+	      << ", name = " << parName[iPar]
+	      << ", value = " << par[iPar]
+	      << ", limits = " << parLimitLow[iPar] << " - " << parLimitHigh[iPar]
+	      << endl;
     }
+  }
+
+  return ;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+void checkChi2(TF1 *f, 
+	       const double limitLow, 
+	       const double limitHigh,
+	       const char *indentLevel,
+	       ofstream &logfile){
+
+  logfile << indentLevel << "- in function checkChi2()" << endl;
+
+  double chi2Red = f -> GetChisquare() / f -> GetNDF();
+  logfile << indentLevel << "- redChi2 = " << chi2Red << endl;
+  if(chi2Red < CHI2LIMITLOW || chi2Red > CHI2LIMITHIGH){
+    logfile << "WARNING - reduced chi2 from fit outside optimal range [ " << limitLow << " : " << limitHigh << " ]" << endl;
   }
 
   return ;
@@ -367,16 +442,23 @@ TF1 **optimizeCutT0(const unsigned int nHits,
 		    double *nEventsSignal,
 		    double *nEventsSignalErr,
 		    double *bgRejection,
-		    double *bgRejectionErr){
+		    double *bgRejectionErr,
+		    ofstream &logfile){
 
+  logfile << "\t- in function optimiteCutT0()" << endl;
   cout << " - optimizing T0 cut " << endl;
 
   TCanvas *cTmp = new TCanvas();
-  
+
+  const char *f_expr = "([0] / 2.) * ( (1. + TMath::Erf( (x-[1]) / (sqrt(2.) * [2]) )) * (1. + TMath::Erf( -(x-[3]) / (sqrt(2.) * [4]) )) ) + [5]";
+  double f_rangeLow = T0FITRANGELOW;
+  double f_rangeHigh = T0FITRANGEHIGH;
   TF1 **f = allocateFArray(nHits,
-			   "([0] / 2.) * ( (1. + TMath::Erf( (x-[1]) / (sqrt(2.) * [2]) )) * (1. + TMath::Erf( -(x-[3]) / (sqrt(2.) * [4]) )) ) + [5]",
-			   T0FITRANGELOW,
-			   T0FITRANGEHIGH);
+			   f_expr,
+			   f_rangeLow, f_rangeHigh,
+			   logfile);
+  logfile << "\t- fitting function = " << f_expr << endl;
+  logfile << "\t- fitting range = [ " << f_rangeLow << " : " << f_rangeHigh << " ]" << endl;
 
   double par[T0NPAR];
   par[0] = T0PARINITPLATEAU;
@@ -407,13 +489,61 @@ TF1 **optimizeCutT0(const unsigned int nHits,
   parLimitHigh[4] = T0PARLIMITHIGHSIGMARIGHT;
   parLimitHigh[5] = T0PARLIMITHIGHOFFSET;
 
+  logfile << "\t- setting function parameters" << endl;
   setFunctionParameters(nHits, T0NPAR, f,
-			par, parName, parLimitLow, parLimitHigh);
+			par, parName, parLimitLow, parLimitHigh,
+			logfile);
 
+  logfile << "\t- fitting T0 distributions: fit range is going to be re-adjusted" << endl;
   for(unsigned int iHit=0; iHit<nHits; iHit++){
+
+    // finding fit range
+    logfile << "\t\t- finding fit range for hit " << iHit << ": " << endl;
+    double mid = h1[iHit] -> GetBinCenter(h1[iHit] -> GetMaximumBin());
+    double max = h1[iHit] -> GetBinContent(h1[iHit] -> GetMaximumBin());
+    logfile << "\t\t\t- position of the maximum = " << mid << endl;
+    logfile << "\t\t\t- value of the maximum = " << max << endl;
+    double rangeLow = mid - 2. *BC;
+    double rangeHigh =  mid + 2. *BC;
+    logfile << "\t\t\t- new fit range = [ " << rangeLow << " - " << rangeHigh << " ]" << endl;
+    f[iHit] -> SetRange(rangeLow, rangeHigh);
+    double plateau = max;
+    double plateauLimitLow = 0.;
+    double plateauLimitHigh = max;
+    logfile << "\t\t\t- new plateau initialization value = " << plateau << ", range = [ " << plateauLimitLow << " - " << plateauLimitHigh << " ]" << endl;
+    f[iHit] -> SetParameter(0, plateau);
+    f[iHit] -> SetParLimits(0, plateauLimitLow, plateauLimitHigh);
+    double muLeft = mid - 0.5 * BC;
+    double muLeftLimitLow = mid-BC;
+    double muLeftLimitHigh = mid;
+    logfile << "\t\t\t- new muLeft initialization value = " << muLeft << ", range = [ " << muLeftLimitLow << " - " << muLeftLimitHigh << " ]" << endl;
+    f[iHit] -> SetParameter(1, muLeft);
+    f[iHit] -> SetParLimits(1, muLeftLimitLow, muLeftLimitHigh);
+    double muRight = mid + 0.5 * BC;
+    double muRightLimitLow = mid;
+    double muRightLimitHigh = mid+BC;
+    logfile << "\t\t\t- new muRight initialization value = " << muRight << ", range = [ " << muRightLimitLow << " - " << muRightLimitHigh << " ]" << endl;
+    f[iHit] -> SetParameter(3, muRight);
+    f[iHit] -> SetParLimits(3, muRightLimitLow, muRightLimitHigh);
+
+    // fitting
+    logfile << "\t\t- fitting " << iHit << ":" << endl;
     h1[iHit] -> Fit(f[iHit], "R && Q");
+    for(unsigned int iPar=0; iPar<T0NPAR; iPar++){
+      logfile << "\t\t\t- par[" << iPar << "] (" << parName[iPar] << ") = ( " << f[iHit] -> GetParameter(iPar) << " +- " << f[iHit] -> GetParError(iPar) << " )" << endl;
+    }
+    logfile << "\t\t\t- chi2 = " << f[iHit] -> GetChisquare() << endl;
+    logfile << "\t\t\t- ndf = " << f[iHit] -> GetNDF() << endl;
+    checkChi2(f[iHit], CHI2LIMITLOW, CHI2LIMITHIGH, "\t\t\t\t", logfile);
+
+    // calculating cuts and bg rejection
+    logfile << "\t\t- calculating cuts and bg rejection" << endl;
     cutLow[iHit] = f[iHit] -> GetParameter(1) - T0CUTNSIGMA * f[iHit] -> GetParameter(2);
     cutHigh[iHit] = f[iHit] -> GetParameter(3) + T0CUTNSIGMA * f[iHit] -> GetParameter(4);
+    if(cutLow[iHit] < 0.){
+      logfile << "WARNING: cutLow < 0 => forcing cutLow = 0" << endl;
+      cutLow[iHit] = 0.;
+    }
     nEventsTotal[iHit] = f[iHit] -> Integral(cutLow[iHit], cutHigh[iHit]);
     nEventsTotalErr[iHit] = f[iHit] -> IntegralError(cutLow[iHit], cutHigh[iHit]);
     double rangeSize = cutHigh[iHit] - cutLow[iHit];
@@ -435,41 +565,248 @@ TF1 **optimizeCutT0(const unsigned int nHits,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void fitCharge(TH1F *h1, 
-	       TF1 *fTotal,
-	       double &cutChargeSharing_Charge,
-	       double &cutNEventsBg_Charge,
-	       double &cutNEventsBgErr_Charge,
-	       double &cutNEventsSignal_Charge,
-	       double &cutNEventsSignalErr_Charge,
-	       double &cutCSRejection_Charge,
-	       double &cutCSRejectionErr_Charge){
+void filterHistogram(TH1F *h1, 
+		     const double chargeQuantile,
+		     ofstream &logfile){
+
+  logfile << "\t\t\t\t\t- in function filterHistogram()" << endl;  
+
+  Int_t n = h1 -> GetNbinsX();
+
+  // finding optimal frequency cut
+  double cut = CHARGEFFTFREQCONVERSION * n / chargeQuantile;
+  logfile << "\t\t\t\t\t- frequency cut = " << cut << endl;  
+
+  // calculating FFT
+  logfile << "\t\t\t\t\t- calculating FFT" << endl;  
+  TH1 *hm =0;
+  TVirtualFFT::SetTransform(0);
+  hm = h1 -> FFT(hm, "MAG");
+
+  // applying frequency cut
+  logfile << "\t\t\t\t\t- applying frequency cut" << endl;  
+  Double_t re_full[n];
+  Double_t im_full[n];
+  TVirtualFFT *fft = TVirtualFFT::GetCurrentTransform();
+  fft -> GetPointsComplex(re_full, im_full);
+  for(unsigned i=cut; i<n-cut; i++){
+    re_full[i] = 0;
+    im_full[i] = 0;
+  }
+
+  // calculating backward transform
+  logfile << "\t\t\t\t\t- calculating reverse FFT" << endl;  
+  TVirtualFFT *fft_back = TVirtualFFT::FFT(1, &n, "C2R M K");
+  fft_back -> SetPointsComplex(re_full, im_full);
+  fft_back -> Transform();
+  TH1 *hb = 0;
+
+  // filling histogram of backward transform
+  logfile << "\t\t\t\t\t- filling filtered histogram" << endl;  
+  hb = TH1::TransformHisto(fft_back, hb, "Re");
+  for(int i=0; i<n; i++){
+    h1 -> SetBinContent(i, hb -> GetBinContent(i) / n);
+  }
+
+  // cleaning memory
+  logfile << "\t\t\t\t\t- cleaning memory" << endl;  
+  delete hm;
+  delete hb;
+  delete fft_back;
+
+  return ;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+int findChargeSharingRange(TH1F *h1,
+			   TH1F *h1_filtered,
+			   const unsigned int algorythm, // see #define CHARGEFITRANGEFINDINGALGORITHM
+			   double &min,
+			   double &cross,
+			   const double chargeQuantile,
+			   ofstream &logfile){
+
+  cout << " - finding charge sharing range" << endl;  
+  logfile << "\t\t\t\t- in function findChargeSharingRange()" << endl;
+
+  // transforming histogram
+  TH1F *hTmp = (TH1F *) h1 -> Clone();  
+  if(algorythm == 0){
+    logfile << "\t\t\t\t- algorythm type: rebinned histogram" << endl;
+    hTmp -> Rebin(10);
+  }
+  else if(algorythm == 1){
+    logfile << "\t\t\t\t- algorythm type: FFT filter of histogram" << endl;
+    filterHistogram(hTmp, chargeQuantile, logfile);
+  }
+  else{
+    cout << " - ERROR!!! invalid algorythm type: " << algorythm << endl;
+    logfile << "ERROR: invalid algorythm type: " << algorythm << endl;
+    return 1;
+  }
+
+  // finding first maximum and first minimum
+  for(int i=1; i<h1 -> GetNbinsX()-1; i++){ // first maximum
+    if(hTmp -> GetBinContent(i) > hTmp -> GetBinContent(i+1)){
+      min = hTmp -> GetBinLowEdge(i);
+      break;
+    }
+  }
+  for(int i=h1 -> FindBin(min); i<h1 -> GetNbinsX()-1; i++){ // first minimum
+    if(hTmp -> GetBinContent(i) <= 0.) continue;
+    if(hTmp -> GetBinContent(i) < hTmp -> GetBinContent(i+1)){
+      cross = hTmp -> GetBinLowEdge(i+1);
+      break;
+    }
+  }
+
+  // copying to h1_filtered
+  for(int i=1; i<hTmp -> GetNbinsX(); i++){
+    h1_filtered -> SetBinContent(i, hTmp -> GetBinContent(i));
+  }
+  delete hTmp;
+
+  return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+int fitCharge(TH1F *h1, 
+	      TH1F *h1_filtered, 
+	      TF1 *fTotal,
+	      double &cutChargeSharing_Charge,
+	      double &cutNEventsBg_Charge,
+	      double &cutNEventsBgErr_Charge,
+	      double &cutNEventsSignal_Charge,
+	      double &cutNEventsSignalErr_Charge,
+	      double &cutCSRejection_Charge,
+	      double &cutCSRejectionErr_Charge,
+	      ofstream &logfile){
   
   cout << " - fitting charge distribution " << endl;
+  logfile << "\t\t\t- in function fitCharge()" << endl;
+
+  // eliminating negative counts
+  logfile << "\t\t\t- eliminating negative counts" << endl;  
+  for(int i=0; i<h1 -> GetNbinsX(); i++){
+    if(h1 -> GetBinContent(i) < 0) h1 -> SetBinContent(i, 0);
+  }
+
+  // finding signal high limit
+  logfile << "\t\t\t- finding signal high limit" << endl;
+  unsigned int nQuantiles = 100;
+  Double_t xq[nQuantiles];
+  Double_t yq[nQuantiles];
+  for (unsigned int iq=0; iq<nQuantiles; iq++){
+    xq[iq] = Float_t(iq+1) / nQuantiles;
+  }
+  h1 -> GetQuantiles(nQuantiles, yq, xq);
+  TGraph *gr = new TGraph(nQuantiles, xq, yq);
+  double quantileCut = 0.95;
+  double chargeQuantile = gr -> Eval(quantileCut);
+  logfile << "\t\t\t\t- charge value containing " << quantileCut << "\% of events = " << chargeQuantile << endl;
+  delete gr;
+
+  // finding approximate BG range
+  logfile << "\t\t\t- finding approximate charge sharing background range" << endl;
+  double chargeMin = -1.;
+  double chargeCross = -1;
+  if(findChargeSharingRange(h1, h1_filtered, CHARGEFITRANGEFINDINGALGORITHM,
+			    chargeMin, chargeCross,
+			    chargeQuantile,
+			    logfile)){
+    cout << " - ERROR!!! cannot find charge sharing range" << endl;
+    logfile << "ERROR: cannot find charge sharing range" << endl;
+    return 1;
+  }
+  cout << " - chargeMin = " << chargeMin << endl;
+  logfile << "\t\t\t\t- chargeMin = " << chargeMin << endl;
+  cout << " - chargeCross = " << chargeCross << endl;
+  logfile << "\t\t\t\t- chargeCross = " << chargeCross << endl;
+  if(chargeMin >= chargeCross){
+    cout << " - ERROR!!! chargeMin >= chargeCross" << endl;
+    logfile << "ERROR: chargeMin >= chargeCross" << endl;
+    return 1;
+  }
+  if(chargeMin < 0.){
+    cout << " - WARNING!!! - chargeMin invalid value: " << chargeMin << endl;
+    logfile << "WARNING: chargeMin invalid value: " << chargeMin << endl;
+  }
+  if(chargeCross < 0.){
+    cout << " - WARNING!!! - chargeCross invalid value: " << chargeCross << endl;
+    logfile << "WARNING: chargeCross invalid value: " << chargeCross << endl;
+  }
 
   // temporary fit of the BG only
-  TF1 *fBg = new TF1("fBg", "[0]/(x-[1])", CHARGEFITRANGELOW, CHARGEQCROSS);
+  logfile << "\t\t\t- temporary fit to charge sharing tail only" << endl;
+  const char *fBg_expr = "[0]/(x-[1])";
+  double fBg_rangeLow = chargeMin + 0.5*(chargeCross-chargeMin);
+  double fBg_rangeHigh = chargeCross;
+  TF1 *fBg = new TF1("fBg", 
+		     fBg_expr,
+		     fBg_rangeLow, fBg_rangeHigh);
+  logfile << "\t\t\t\t- fitting function = " << fBg_expr << endl;
+  logfile << "\t\t\t\t- fitting range = [ " << fBg_rangeLow << " : " << fBg_rangeHigh << " ]" << endl;
+  logfile << "\t\t\t\t- uninitialized parameters (this may be optimized)" << endl;
   h1 -> Fit(fBg, "R && Q");
   double p0 = fBg -> GetParameter(0);
   double p1 = fBg -> GetParameter(1);
+  logfile << "\t\t\t\t- result: " << endl;
+  logfile << "\t\t\t\t\t- p0 = " << p0 << endl;
+  logfile << "\t\t\t\t\t- p1 = " << p1 << endl;
+  logfile << "\t\t\t\t\t- chi2 = " << fBg -> GetChisquare() << endl;
+  logfile << "\t\t\t\t\t- ndf = " << fBg -> GetNDF() << endl;
   delete fBg;
 
   //  temporary fit of the signal only
-  TF1 *fSignal = new TF1("fSignal", "( [0] / ( sqrt(2. * TMath::Pi()) * [1] ) ) * exp( - (x-[2]) * (x-[2]) / (2. * [1] * [1]) )", CHARGEQCROSS, CHARGEFITRANGEHIGH);
-  fSignal -> SetParameter(0, 2.);
-  fSignal -> SetParameter(1, 0.05);
-  fSignal -> SetParameter(2, 0.1);
+  logfile << "\t\t\t- temporary fit to the signal distribution only" << endl;
+  const char *fSignal_expr = "( [0] / ( sqrt(2. * TMath::Pi()) * [1] ) ) * exp( - (x-[2]) * (x-[2]) / (2. * [1] * [1]) )";
+  double fSignal_rangeLow = chargeCross;
+  double fSignal_rangeHigh = chargeQuantile;
+  TF1 *fSignal = new TF1("fSignal", 
+			 fSignal_expr,
+			 fSignal_rangeLow, fSignal_rangeHigh);
+  logfile << "\t\t\t\t- fitting function = " << fSignal_expr << endl;
+  logfile << "\t\t\t\t- fitting range = [ " << fSignal_rangeLow << " : " << fSignal_rangeHigh << " ]" << endl;
+  logfile << "\t\t\t\t- initializing parameters:" << endl;
+  h1 -> GetXaxis() -> SetRangeUser(fSignal_rangeLow, fSignal_rangeHigh);
+  double scaleInit = h1 -> Integral();
+  double muInit = h1 -> GetBinCenter(h1 -> GetMaximumBin());
+  double sigmaInit = muInit / 2.;
+  logfile << "\t\t\t\t\t- scale = " << scaleInit << endl;
+  logfile << "\t\t\t\t\t- mu = " << muInit << endl;
+  logfile << "\t\t\t\t\t- sigma = " << sigmaInit << endl;
+  fSignal -> SetParameter(0, scaleInit);
+  fSignal -> SetParameter(1, muInit);
+  fSignal -> SetParameter(2, sigmaInit);
   h1 -> Fit(fSignal, "R && Q");
 
   // final fit BG+signal
+  logfile << "\t\t\t- final fit" << endl;
+  double fTotal_rangeLow = fBg_rangeLow;
+  double fTotal_rangeHigh = fSignal_rangeHigh;
+  fTotal -> SetRange(fTotal_rangeLow, fTotal_rangeHigh);
+  logfile << "\t\t\t\t- fitting range = [ " << fTotal_rangeLow << " : " << fTotal_rangeHigh << " ]" << endl;
+  logfile << "\t\t\t\t- initializing parameters from previous temporary fits" << endl;
   fTotal -> SetParameter(0, fSignal -> GetParameter(0));
   fTotal -> SetParameter(1, fSignal -> GetParameter(1));
   fTotal -> SetParameter(2, fSignal -> GetParameter(2));
   fTotal -> SetParameter(3, p0);
   fTotal -> SetParameter(4, p1);
   h1 -> Fit(fTotal, "R && Q");
+  checkChi2(fTotal, CHI2LIMITLOW, CHI2LIMITHIGH, "\t\t\t\t\t", logfile);
 
   // finding BG-signal intersection point
+  logfile << "\t\t\t- finding intersection point between charge sharing and signal distributions" << endl;
   TF1 *fIntersect = new TF1("fIntersect",
 			    "TMath::Abs(( [0] / ( sqrt(2. * TMath::Pi()) * [1] ) ) * exp( - (x-[2]) * (x-[2]) / (2. * [1] * [1]) ) - ([3] / (x-[4])) * (1. + TMath::Erf((-(x-[2])) / (sqrt(2.)*[1]))) / 2. )",
 			    0., fTotal -> GetParameter(2));
@@ -481,8 +818,8 @@ void fitCharge(TH1F *h1,
   cutChargeSharing_Charge = fIntersect -> GetMinimumX();
   delete fIntersect;
 
-  // this part does not work yet
-  /* // computing rejection power */
+  // computing rejection power
+  logfile << "\t\t\t- computing rejection power (yet to be implemented)" << endl;
   /* fSignal -> SetParameter(0, fTotal -> GetParameter(0)); */
   /* fSignal -> SetParameter(1, fTotal -> GetParameter(1)); */
   /* fSignal -> SetParameter(2, fTotal -> GetParameter(2)); */
@@ -508,7 +845,7 @@ void fitCharge(TH1F *h1,
 
   delete fSignal;
 
-  return ;
+  return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -517,11 +854,12 @@ void fitCharge(TH1F *h1,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-TF1 **optimizeChargeCut(const unsigned int nHits,
+TF1 **optimizeCutCharge(const unsigned int nHits,
 			TH1F **h1_bg,
 			TH2F **h2,
 			TH2F **h2_bgSubtracted,
 			TH1F **h1_bgSubtracted,
+			TH1F **h1_bgSubtracted_filtered,
 			double *cutLow_T0,
 			double *cutHigh_T0,
 			double *cutChargeSharing_Charge,
@@ -530,16 +868,21 @@ TF1 **optimizeChargeCut(const unsigned int nHits,
 			double *cutNEventsSignal_Charge,
 			double *cutNEventsSignalErr_Charge,
 			double *cutCSRejection_Charge,
-			double *cutCSRejectionErr_Charge){
+			double *cutCSRejectionErr_Charge,
+			ofstream &logfile){
 
   cout << " - optimizing charge cut " << endl;
+  logfile << "\t- in function optimizeCutCharge()" << endl;
 
   TCanvas *cTmp = new TCanvas();
 
+  const char *f_expr = "( [0] / ( sqrt(2. * TMath::Pi()) * [1] ) ) * exp( - (x-[2]) * (x-[2]) / (2. * [1] * [1]) ) + ([3] / (x-[4])) * (1. + TMath::Erf((-(x-[2])) / (sqrt(2.)*[1]))) / 2. ";
   TF1 **f = allocateFArray(nHits,
-			   "( [0] / ( sqrt(2. * TMath::Pi()) * [1] ) ) * exp( - (x-[2]) * (x-[2]) / (2. * [1] * [1]) ) + ([3] / (x-[4])) * (1. + TMath::Erf((-(x-[2])) / (sqrt(2.)*[1]))) / 2. ",
+			   f_expr,
 			   CHARGEFITRANGELOW,
-			   CHARGEFITRANGEHIGH);
+			   CHARGEFITRANGEHIGH,
+			   logfile);
+  logfile << "\t- fitting function = " << f_expr << endl;
 
   double par[CHARGENPAR];
   par[0] = CHARGEPARINITSCALE;
@@ -566,18 +909,23 @@ TF1 **optimizeChargeCut(const unsigned int nHits,
   parLimitHigh[3] = CHARGEPARLIMITHIGHBGSCALE;
   parLimitHigh[4] = CHARGEPARLIMITHIGHBGASYN;
 
+  logfile << "\t- setting function parameters" << endl;
   setFunctionParameters(nHits, CHARGENPAR, f,
-			par, parName, parLimitLow, parLimitHigh);
+			par, parName, parLimitLow, parLimitHigh,
+			logfile);
 
+  logfile << "\t- building charge distribution and fitting" << endl;
   for(unsigned int iHit=0; iHit<nHits; iHit++){
 
     // calculating number of bins outside CHARGE cut region
     double nBinsT0 = T0NBINS * (cutLow_T0[iHit] - T0MIN + T0MAX - cutHigh_T0[iHit]) / (T0MAX - T0MIN);
-    cout << "- channel " << iHit << ": "
+    logfile << "\t\t- hit " << iHit << ": number of T0 bins outside the T0 cut region (background region) = " << nBinsT0 << endl;
+    cout << " - channel " << iHit << ": "
 	 << "nBinsT0 = " << nBinsT0
 	 << endl;
 
     // subtracting background from 2D histogram
+    logfile << "\t\t- hit " << iHit << ": subtracting background from 2D histogram" << endl;
     TH2F *h2tmp = new TH2F("h2", "h2", T0NBINS, T0MIN, T0MAX, CHARGENBINS, CHARGEMIN, CHARGEMAX);
     for(unsigned int iY=0; iY<CHARGENBINS; iY++){
       double charge = h1_bg[iHit] -> GetBinContent(iY+1) / nBinsT0;
@@ -592,6 +940,7 @@ TF1 **optimizeChargeCut(const unsigned int nHits,
     delete h2tmp;
 
     // calculating 1D signal histogram
+    logfile << "\t\t- hit " << iHit << ": projecting signal region onto 1D histogram" << endl;
     TH1D *h1Tmp = h2_bgSubtracted[iHit] -> ProjectionY("tmp", 
 						       h2_bgSubtracted[iHit] -> GetXaxis() -> FindBin(cutLow_T0[iHit]),
 						       h2_bgSubtracted[iHit] -> GetXaxis() -> FindBin(cutHigh_T0[iHit]),
@@ -602,19 +951,65 @@ TF1 **optimizeChargeCut(const unsigned int nHits,
     delete h1Tmp;
 
     // fitting signal
-    fitCharge(h1_bgSubtracted[iHit], f[iHit],
-	      cutChargeSharing_Charge[iHit],
-	      cutNEventsBg_Charge[iHit],
-	      cutNEventsBgErr_Charge[iHit],
-	      cutNEventsSignal_Charge[iHit],
-	      cutNEventsSignalErr_Charge[iHit],
-	      cutCSRejection_Charge[iHit],
-	      cutCSRejectionErr_Charge[iHit]);
+    logfile << "\t\t- hit " << iHit << ": fitting bg-subtracted charge distribution" << endl;
+    if(fitCharge(h1_bgSubtracted[iHit], h1_bgSubtracted_filtered[iHit], f[iHit],
+		 cutChargeSharing_Charge[iHit],
+		 cutNEventsBg_Charge[iHit],
+		 cutNEventsBgErr_Charge[iHit],
+		 cutNEventsSignal_Charge[iHit],
+		 cutNEventsSignalErr_Charge[iHit],
+		 cutCSRejection_Charge[iHit],
+		 cutCSRejectionErr_Charge[iHit],
+		 logfile)){
+      cout << " - ERROR!!! cannot fit charge" << endl;
+      return NULL;
+    }
 
   }
 
   delete cTmp;
   return f;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void optimizeCutTiming(const unsigned int nHits,
+		       TH1F **h1,
+		       TGraph **gr_quantiles,
+		       double *cutLow,
+		       double *cutHigh,
+		       ofstream &logfile){
+
+  cout << " - optimizing Timing cut" << endl;
+  logfile << "\t- in function optimizingCutTiming()" << endl;
+
+  for(unsigned int iHit=0; iHit<nHits; iHit++){
+
+    unsigned int nQuantiles = TIMINGNQUANTILES;
+    logfile << "\t\t- hit " << iHit << ": building quantiles graph with nQuantiles = " << nQuantiles << endl;
+    Double_t xq[nQuantiles];
+    Double_t yq[nQuantiles];
+    for (unsigned int iq=0; iq<nQuantiles; iq++){
+      xq[iq] = Float_t(iq+1) / nQuantiles;
+    }
+    h1[iHit] -> GetQuantiles(nQuantiles, yq, xq);
+    for (unsigned int iq=0; iq<nQuantiles; iq++){
+      gr_quantiles[iHit] -> SetPoint(gr_quantiles[iHit] -> GetN(), xq[iq], yq[iq]);
+    }
+
+    double quantileLow = TIMINGCUTFRACTION/2.;
+    double quantileHigh = 1.-TIMINGCUTFRACTION/2.;
+    logfile << "\t\t- hit " << iHit << ": evaluating cut in quantiles region [ " << quantileLow << " : " << quantileHigh << " ]" << endl;
+    cutLow[iHit] = gr_quantiles[iHit] -> Eval(quantileLow);
+    cutHigh[iHit] = gr_quantiles[iHit] -> Eval(quantileHigh);
+
+  }
+
+  return ;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -666,17 +1061,21 @@ void plotT0(TH1F *h1,
   double yScaleFactor = 1.1;
 
   fillExclusionPlot(h1_exclusionLeft,
-		    h1 -> GetXaxis() -> GetBinLowEdge(1), cutLow,
+		    0.9*h1 -> GetXaxis() -> GetBinLowEdge(1), cutLow,
 		    yScaleFactor * h1 -> GetBinContent(h1 -> GetMaximumBin()));
   fillExclusionPlot(h1_exclusionRight,
-		    cutHigh, h1 -> GetBinLowEdge(h1 -> GetNbinsX()),
+		    cutHigh, 1.1*h1 -> GetBinLowEdge(h1 -> GetNbinsX()),
 		    yScaleFactor * h1 -> GetBinContent(h1 -> GetMaximumBin()));
 
   h1 -> Draw();
+  double rangeMin = cutLow - 1.5*BC;
+  double rangeMax = cutLow + 4.5*BC;
+  if(rangeMin < 0) rangeMin = 0.;
+  h1 -> GetXaxis() -> SetRangeUser(rangeMin, rangeMax);
+  h1 -> GetYaxis() -> SetRangeUser(0, yScaleFactor * h1_cut -> GetBinContent(h1_cut -> GetMaximumBin()));
   h1_cut -> Draw("same");
   h1_exclusionLeft -> Draw("same");
   h1_exclusionRight -> Draw("same");
-  h1 -> GetYaxis() -> SetRangeUser(0, yScaleFactor * h1 -> GetBinContent(h1 -> GetMaximumBin()));
 
   leg = new TLegend(T0LEGENDXLOW, T0LEGENDYLOW, T0LEGENDXHIGH, T0LEGENDYHIGH);
   leg -> SetFillColor(LEGENDFILLCOLOR);
@@ -741,7 +1140,7 @@ void plotCharge(TH1F *h1,
   h1 -> Draw();
   h1_cut -> Draw("same");
 
-  leg = new TLegend(T0LEGENDXLOW, T0LEGENDYLOW, T0LEGENDXHIGH, T0LEGENDYHIGH);
+  leg = new TLegend(CHARGELEGENDXLOW, CHARGELEGENDYLOW, CHARGELEGENDXHIGH, CHARGELEGENDYHIGH);
   leg -> SetFillColor(LEGENDFILLCOLOR);
   leg -> SetLineColor(LEGENDLINECOLOR);
   char text[200];
@@ -772,12 +1171,13 @@ void plotChargeFit(TH1F *h1,
 
   cout << " - plotting charge fit " << endl;
 
-  const double yScaleFactor = 1.1;
+  const double yScaleFactor = 2.5;
 
   gStyle -> SetOptFit(0);
 
-  h1 -> GetYaxis() -> SetRangeUser(0., yScaleFactor * h1 -> GetBinContent(h1 -> GetMaximumBin()));
-  h1 -> Draw("e");
+  h1 -> GetXaxis() -> SetRangeUser(0., f -> GetParameter(2) + 5. * f -> GetParameter(1));
+  h1 -> GetYaxis() -> SetRangeUser(0., yScaleFactor * f -> Eval(f -> GetParameter(2)));
+  h1 -> Draw();
 
   fillExclusionPlot(h1_exclusion,
                     h1 -> GetXaxis() -> GetBinLowEdge(1), cut,
@@ -842,20 +1242,55 @@ void plotChargeFit(TH1F *h1,
 
 void plotTiming(TH1F *h1, 
 		TH1F *h1Cut,
-		TLegend *leg){
+		const double cutLow,
+		const  double cutHigh,
+		TLegend *leg,
+		TPaveStats *ptresults,
+		TH1F *h1_exclusionLeft,
+		TH1F *h1_exclusionRight){
 
   cout << " - plotting timing" << endl;
+
+  const double yScaleFactor = 1.1;
+
+  h1 -> GetYaxis() -> SetRangeUser(0., yScaleFactor * h1 -> GetBinContent(h1Cut -> GetMaximumBin()));
+  h1Cut -> GetYaxis() -> SetRangeUser(0., yScaleFactor * h1 -> GetBinContent(h1Cut -> GetMaximumBin()));
 
   h1 -> Draw();
   h1Cut -> Draw("same");
 
+  fillExclusionPlot(h1_exclusionLeft,
+                    h1 -> GetXaxis() -> GetBinLowEdge(1), cutLow,
+		    yScaleFactor * h1 -> GetBinContent(h1Cut -> GetMaximumBin()));
+  h1_exclusionLeft -> Draw("same");
+
+  fillExclusionPlot(h1_exclusionRight,
+		    cutHigh, 1.1 * h1 -> GetBinLowEdge(h1 -> GetNbinsX()),
+                    yScaleFactor * h1 -> GetBinContent(h1Cut -> GetMaximumBin()));
+  h1_exclusionRight -> Draw("same");
+
   leg = new TLegend(TIMINGLEGENDXLOW, TIMINGLEGENDYLOW, TIMINGLEGENDXHIGH, TIMINGLEGENDYHIGH);
   leg -> SetFillColor(LEGENDFILLCOLOR);
-  leg -> SetLineColor(LEGENDLINECOLOR);
+  leg -> SetLineColor(1);
   char text[200];
   leg -> AddEntry(h1, "no cut", "f");
   leg -> AddEntry(h1Cut, "T_{0} and charge cuts", "f");
+  leg -> AddEntry(h1_exclusionLeft, "cut region", "f");
   leg -> Draw();
+
+  ptresults = new TPaveStats(TIMINGRESULTSXLOW, TIMINGRESULTSYLOW, TIMINGRESULTSXHIGH, TIMINGRESULTSYHIGH, "brNDC");
+  ptresults -> SetTextSize(0.025);
+  ptresults -> SetName("results");
+  ptresults -> SetBorderSize(1);
+  ptresults -> SetFillColor(LEGENDFILLCOLOR);
+  ptresults -> SetLineColor(1);
+  ptresults -> SetTextAlign(12);
+  ptresults -> SetTextFont(42);
+  sprintf(text, "Timing cut #in [%.1lf #pm %.1lf] ns", cutLow, cutHigh);
+  ptresults -> AddText(text);
+  ptresults -> SetOptStat(0);
+  ptresults -> SetOptFit(111);
+  ptresults -> Draw();
 
   return ;
 }
@@ -866,81 +1301,110 @@ void plotTiming(TH1F *h1,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void draw(const unsigned int nH2,
-	  TH2F **h2_Timing_vs_T0,
-	  TH2F **h2_Charge_vs_T0,
-	  TH2F **h2_Charge_vs_Timing,
-	  TH1F **h1_T0,
-	  TH1F **h1_T0_TimingCut,
-	  TH1F **h1_exclusionLeft_T0,
-	  TH1F **h1_exclusionRight_T0,
-	  double *cut_Timing,
-	  const unsigned int T0Npar,
-	  TF1 **f_T0,
-	  double *cutLow_T0,
-	  double *cutHigh_T0,
-	  double *cutBgRejection_T0,
-	  double *cutBgRejectionErr_T0,
-	  TH1F **h1_Charge,
-	  TH1F **h1_Charge_T0Cut,
-	  TH2F **h2_Charge_vs_T0_bgSubtracted,
-	  TH1F **h1_Charge_bgSubtracted,
-	  TF1 **f_Charge,
-	  double *cutChargeSharing_Charge,
-	  TH1F **h1_exclusion_Charge,
-	  TH1F **h1_Timing,
-	  TH1F **h1_Timing_T0Cut_ChargeCut,
-	  const string outputFolder,
-	  const string flag,
-	  const bool holdPlots){
+void savePlots(const unsigned int nH2,
+	       TH2F **h2_Timing_vs_T0,
+	       TH2F **h2_Charge_vs_T0,
+	       TH2F **h2_Charge_vs_Timing,
+	       TH1F **h1_T0,
+	       TH1F **h1_T0_TimingCut,
+	       TH1F **h1_exclusionLeft_T0,
+	       TH1F **h1_exclusionRight_T0,
+	       double *cut_Timing,
+	       const unsigned int T0Npar,
+	       TF1 **f_T0,
+	       double *cutLow_T0,
+	       double *cutHigh_T0,
+	       double *cutBgRejection_T0,
+	       double *cutBgRejectionErr_T0,
+	       TH1F **h1_Charge,
+	       TH1F **h1_Charge_T0Cut,
+	       TH2F **h2_Charge_vs_T0_bgSubtracted,
+	       TH1F **h1_Charge_bgSubtracted,
+	       TH1F **h1_Charge_bgSubtracted_filtered,
+	       TF1 **f_Charge,
+	       double *cutChargeSharing_Charge,
+	       TH1F **h1_exclusion_Charge,
+	       TH1F **h1_Timing,
+	       TH1F **h1_Timing_T0Cut_ChargeCut,
+	       TGraph **gr_Timing_T0Cut_ChargeCut_quantiles,
+	       double *cutLow_Timing,
+	       double *cutHigh_Timing,
+	       TH1F **h1_exclusionLeft_Timing,
+	       TH1F **h1_exclusionRight_Timing,
+	       const string outputFolder,
+	       const string flag,
+	       const bool drawPlots,
+	       const bool holdPlots,
+	       ofstream &logfile){
 
   cout << " - drawing " << endl;
 
   gStyle -> SetOptStat(0);
-  gStyle -> SetOptFit(1);
+  gStyle -> SetOptFit(0);
 
   // allocating canvases
-  TCanvas **cc_Timing_vs_T0 = allocateCanvasArray(nH2, "cc_Timing_vs_T0_%d",
+  TCanvas **cc_Timing_vs_T0 = allocateCanvasArray(nH2, "cc_Timing_vs_T0_channel_%d",
   						  0, 0, CANVASSIZE, CANVASSIZE,
-  						  false, true, true);
+  						  false, true, true,
+						  logfile);
 
-  TCanvas **cc_Charge_vs_T0 = allocateCanvasArray(nH2, "cc_Charge_vs_T0_%d",
-						  CANVASSIZE, 0, CANVASSIZE, CANVASSIZE,
-						  false, true, true);
+  TCanvas **cc_Charge_vs_T0 = allocateCanvasArray(nH2, "cc_Charge_vs_T0_channel_%d",
+  						  CANVASSIZE, 0, CANVASSIZE, CANVASSIZE,
+  						  false, true, true,
+						  logfile);
 
-  TCanvas **cc_Charge_vs_Timing = allocateCanvasArray(nH2, "cc_Charge_vs_Timing_%d",
+  TCanvas **cc_Charge_vs_Timing = allocateCanvasArray(nH2, "cc_Charge_vs_Timing_channel_%d",
   						      2.*CANVASSIZE, 0, CANVASSIZE, CANVASSIZE,
-  						      false, true, true);
+  						      false, true, true,
+						      logfile);
 
-  TCanvas **cc_T0 = allocateCanvasArray(nH2, "cc_T0_%d",
+  TCanvas **cc_T0 = allocateCanvasArray(nH2, "cc_T0_channel_%d",
   					0, CANVASSIZE, CANVASSIZE, CANVASSIZE,
-  					false, false, false);
+  					false, false, false,
+					logfile);
 
-  TCanvas **cc_Charge = allocateCanvasArray(nH2, "cc_Charge_%d",
+  TCanvas **cc_Charge = allocateCanvasArray(nH2, "cc_Charge_channel_%d",
   					    CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
-  					    true, true, false);
+  					    true, true, false,
+					    logfile);
 
-  TCanvas **cc_Charge_vs_T0_bgSubtracted = allocateCanvasArray(nH2, "cc_Charge_vs_T0_bgSubtracted_%d",
-							       2.*CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
-							       false, true, false);
+  TCanvas **cc_Charge_vs_T0_bgSubtracted = allocateCanvasArray(nH2, "cc_Charge_vs_T0_bgSubtracted_channel_%d",
+  							       2.*CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
+  							       false, true, false,
+							       logfile);
 
-  TCanvas **cc_Charge_bgSubtracted = allocateCanvasArray(nH2, "cc_Charge_bgSubtracted_%d",
-							 2.*CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
-							 false, false, false);
-  TCanvas **cc_Timing = allocateCanvasArray(nH2, "cc_Timing_%d",
+  TCanvas **cc_Charge_bgSubtracted = allocateCanvasArray(nH2, "cc_Charge_bgSubtracted_channel_%d",
+  							 2.*CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
+  							 false, false, false,
+							 logfile);
+
+  TCanvas **cc_Charge_bgSubtracted_filtered = allocateCanvasArray(nH2, "cc_Charge_bgSubtracted_filtered_channel_%d",
+								  2.*CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
+								  false, false, false,
+								  logfile);
+
+  TCanvas **cc_Timing = allocateCanvasArray(nH2, "cc_Timing_channel_%d",
   					    CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
-  					    false, false, false);
+  					    false, false, false,
+					    logfile);
+
+  TCanvas **cc_Timing_quantiles = allocateCanvasArray(nH2, "cc_Timing_quantiles_channel_%d",
+  						      CANVASSIZE, CANVASSIZE, CANVASSIZE, CANVASSIZE,
+  						      false, false, false,
+						      logfile);
 
   // allocating functions
   TF1 **f_ChargeBg = allocateFArray(nH2,
 				    "([0] / (x-[1])) * (1. + TMath::Erf((-(x-[2])) / (sqrt(2.)*[3]))) / 2.",
 				    CHARGEFITRANGELOW,
-				    CHARGEFITRANGEHIGH);
+				    CHARGEFITRANGEHIGH,
+				    logfile);
 
   TF1 **f_ChargeSignal = allocateFArray(nH2,
 					"( [0] / ( sqrt(2. * TMath::Pi()) * [1] ) ) * exp( - (x-[2]) * (x-[2]) / (2. * [1] * [1]) )",				       
 					CHARGEFITRANGELOW,
-					CHARGEFITRANGEHIGH);
+					CHARGEFITRANGEHIGH,
+					logfile);
   
   // allocating TLegends and TPaves
   TLegend **leg_T0 = new TLegend*[nH2];
@@ -951,6 +1415,10 @@ void draw(const unsigned int nH2,
   TPaveStats **ptstats_ChargeFit = new TPaveStats*[nH2];
   TLegend **legExclusion_ChargeFit = new TLegend*[nH2];
   TLegend **leg_Timing = new TLegend*[nH2];
+  TPaveStats **ptstats_Timing = new TPaveStats*[nH2];
+
+  // creating output file
+  TFile *file = TFile::Open((outputFolder + flag + "-cuts.root").c_str(), "RECREATE");
 
   // drawing
   for(unsigned int iH=0; iH<nH2; iH++){
@@ -960,24 +1428,30 @@ void draw(const unsigned int nH2,
 
     cc_Timing_vs_T0[iH] -> cd();
     h2_Timing_vs_T0[iH] -> Draw("colz");
-    cc_Timing_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_vs_T0.png").c_str());
-    cc_Timing_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_vs_T0.pdf").c_str());
-    cc_Timing_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_vs_T0.eps").c_str());
-    cc_Timing_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_vs_T0.root").c_str());
+    cc_Timing_vs_T0[iH] -> Write();
+    if(drawPlots){
+      cc_Timing_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_vs_T0.png").c_str());
+      cc_Timing_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_vs_T0.pdf").c_str());
+      cc_Timing_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_vs_T0.eps").c_str());
+    }
 
     cc_Charge_vs_T0[iH] -> cd();
     h2_Charge_vs_T0[iH] -> Draw("colz");
-    cc_Charge_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0.png").c_str());
-    cc_Charge_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0.pdf").c_str());
-    cc_Charge_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0.eps").c_str());
-    cc_Charge_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0.root").c_str());
+    cc_Charge_vs_T0[iH] -> Write();
+    if(drawPlots){
+      cc_Charge_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0.png").c_str());
+      cc_Charge_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0.pdf").c_str());
+      cc_Charge_vs_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0.eps").c_str());
+    }
 
     cc_Charge_vs_Timing[iH] -> cd();
     h2_Charge_vs_Timing[iH] -> Draw("colz");
-    cc_Charge_vs_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_Timing.png").c_str());
-    cc_Charge_vs_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_Timing.pdf").c_str());
-    cc_Charge_vs_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_Timing.eps").c_str());
-    cc_Charge_vs_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_Timing.root").c_str());
+    cc_Charge_vs_Timing[iH] -> Write();
+    if(drawPlots){
+      cc_Charge_vs_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_Timing.png").c_str());
+      cc_Charge_vs_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_Timing.pdf").c_str());
+      cc_Charge_vs_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_Timing.eps").c_str());
+    }
 
     cc_T0[iH] -> cd();
     plotT0(h1_T0[iH], h1_T0_TimingCut[iH], f_T0[iH],
@@ -986,27 +1460,33 @@ void draw(const unsigned int nH2,
     	   cut_Timing[iH], cutLow_T0[iH], cutHigh_T0[iH],
     	   cutBgRejection_T0[iH], cutBgRejectionErr_T0[iH],
     	   T0Npar);
-    cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.png").c_str());
-    cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.pdf").c_str());
-    cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.eps").c_str());
-    cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.root").c_str());
+    cc_T0[iH] -> Write();
+    if(drawPlots){
+      cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.png").c_str());
+      cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.pdf").c_str());
+      cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.eps").c_str());
+    }
 
     cc_Charge[iH] -> cd();
     plotCharge(h1_Charge[iH], h1_Charge_T0Cut[iH],
     	       leg_Charge[iH],
     	       cutLow_T0[iH], cutHigh_T0[iH]);
-    cc_Charge[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge.png").c_str());
-    cc_Charge[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge.pdf").c_str());
-    cc_Charge[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge.eps").c_str());
-    cc_Charge[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge.root").c_str());
+    cc_Charge[iH] -> Write();
+    if(drawPlots){
+      cc_Charge[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge.png").c_str());
+      cc_Charge[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge.pdf").c_str());
+      cc_Charge[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge.eps").c_str());
+    }
 
     cc_Charge_vs_T0_bgSubtracted[iH] -> cd();
     h2_Charge_vs_T0_bgSubtracted[iH] -> SetMinimum(0);
     h2_Charge_vs_T0_bgSubtracted[iH] -> Draw("colz");
-    cc_Charge_vs_T0_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0_bgSubtracted.png").c_str());
-    cc_Charge_vs_T0_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0_bgSubtracted.pdf").c_str());
-    cc_Charge_vs_T0_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0_bgSubtracted.eps").c_str());
-    cc_Charge_vs_T0_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0_bgSubtracted.root").c_str());
+    cc_Charge_vs_T0_bgSubtracted[iH] -> Write();
+    if(drawPlots){
+      cc_Charge_vs_T0_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0_bgSubtracted.png").c_str());
+      cc_Charge_vs_T0_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0_bgSubtracted.pdf").c_str());
+      cc_Charge_vs_T0_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_vs_T0_bgSubtracted.eps").c_str());
+    }
 
     cc_Charge_bgSubtracted[iH] -> cd();
     plotChargeFit(h1_Charge_bgSubtracted[iH], 
@@ -1014,31 +1494,65 @@ void draw(const unsigned int nH2,
 		  h1_exclusion_Charge[iH], cutChargeSharing_Charge[iH],
 		  leg_ChargeFit[iH], ptstats_ChargeFit[iH], legExclusion_ChargeFit[iH],
 		  CHARGENPAR);
-    cc_Charge_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted.png").c_str());
-    cc_Charge_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted.pdf").c_str());
-    cc_Charge_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted.eps").c_str());
-    cc_Charge_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted.root").c_str());
+    cc_Charge_bgSubtracted[iH] -> Write();
+    if(drawPlots){
+      cc_Charge_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted.png").c_str());
+      cc_Charge_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted.pdf").c_str());
+      cc_Charge_bgSubtracted[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted.eps").c_str());
+    }
+
+    cc_Charge_bgSubtracted_filtered[iH] -> cd();
+    h1_Charge_bgSubtracted_filtered[iH] -> Draw();
+    cc_Charge_bgSubtracted_filtered[iH] -> Write();
+    if(drawPlots){
+      cc_Charge_bgSubtracted_filtered[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted_filtered.png").c_str());
+      cc_Charge_bgSubtracted_filtered[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted_filtered.pdf").c_str());
+      cc_Charge_bgSubtracted_filtered[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_bgSubtracted_filtered.eps").c_str());
+    }
 
     cc_Timing[iH] -> cd();
     plotTiming(h1_Timing[iH], h1_Timing_T0Cut_ChargeCut[iH],
-	       leg_Timing[iH]);
-    cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.png").c_str());
-    cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.pdf").c_str());
-    cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.eps").c_str());
-    cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.root").c_str());
+    	       cutLow_Timing[iH], cutHigh_Timing[iH],
+    	       leg_Timing[iH], ptstats_Timing[iH],
+    	       h1_exclusionLeft_Timing[iH], h1_exclusionRight_Timing[iH]);
+    cc_Timing[iH] -> Write();
+    if(drawPlots){
+      cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.png").c_str());
+      cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.pdf").c_str());
+      cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.eps").c_str());
+    }
+
+    cc_Timing_quantiles[iH] -> cd();
+    gr_Timing_T0Cut_ChargeCut_quantiles[iH] -> GetXaxis() -> SetTitle("fractional area");
+    gr_Timing_T0Cut_ChargeCut_quantiles[iH] -> GetYaxis() -> SetTitle("Timing [ns]");
+    gr_Timing_T0Cut_ChargeCut_quantiles[iH] -> SetLineWidth(3);
+    gr_Timing_T0Cut_ChargeCut_quantiles[iH] -> Draw("al");
+    cc_Timing_quantiles[iH] -> Write();
+    if(drawPlots){
+      cc_Timing_quantiles[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_quantiles.png").c_str());
+      cc_Timing_quantiles[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_quantiles.pdf").c_str());
+      cc_Timing_quantiles[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing_quantiles.eps").c_str());
+    }
   }
+
+  file -> Write();
+  file -> Close();
+  delete file;
 
   // cleaning memory
   if(holdPlots) return ;
-  deleteFArray(MAX_HITS, f_ChargeBg);
-  deleteFArray(MAX_HITS, f_ChargeSignal);
-  deleteCanvasArray(nH2, cc_Timing_vs_T0);
-  deleteCanvasArray(nH2, cc_Charge_vs_T0);
-  deleteCanvasArray(nH2, cc_Charge_vs_Timing);
-  deleteCanvasArray(nH2, cc_T0);
-  deleteCanvasArray(nH2, cc_Charge);
-  deleteCanvasArray(nH2, cc_Charge_vs_T0_bgSubtracted);
-  deleteCanvasArray(nH2, cc_Timing);
+  deleteFArray(MAX_HITS, f_ChargeBg, logfile);
+  deleteFArray(MAX_HITS, f_ChargeSignal, logfile);
+  deleteCanvasArray(nH2, cc_Timing_vs_T0, logfile);
+  deleteCanvasArray(nH2, cc_Charge_vs_T0, logfile);
+  deleteCanvasArray(nH2, cc_Charge_vs_Timing, logfile);
+  deleteCanvasArray(nH2, cc_T0, logfile);
+  deleteCanvasArray(nH2, cc_Charge, logfile);
+  deleteCanvasArray(nH2, cc_Charge_vs_T0_bgSubtracted, logfile);
+  deleteCanvasArray(nH2, cc_Charge_bgSubtracted, logfile);
+  deleteCanvasArray(nH2, cc_Charge_bgSubtracted_filtered, logfile);
+  deleteCanvasArray(nH2, cc_Timing, logfile);
+  deleteCanvasArray(nH2, cc_Timing_quantiles, logfile);
   return ;
 }
 
