@@ -1851,8 +1851,6 @@ void savePlots(const unsigned int nH2,
     	   cutBgRejection_T0[iH], cutBgRejectionErr_T0[iH],
     	   T0Npar);
     cc_T0[iH] -> Write();
-    // tmp
-    cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.png").c_str());
     if(drawPlots){
       cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.png").c_str());
       cc_T0[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_T0.pdf").c_str());
@@ -1877,8 +1875,6 @@ void savePlots(const unsigned int nH2,
 			cutLow_T0[iH], cutHigh_T0[iH],
 			cutLow_Timing[iH], cutHigh_Timing[iH]);
     cc_Charge_T0Cut_TimingCut[iH] -> Write();
-    // tmp
-    cc_Charge_T0Cut_TimingCut[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_T0Cut_TimingCut.png").c_str());
     if(drawPlots){
       cc_Charge_T0Cut_TimingCut[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_T0Cut_TimingCut.png").c_str());
       cc_Charge_T0Cut_TimingCut[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Charge_T0Cut_TimingCut.pdf").c_str());
@@ -1923,8 +1919,6 @@ void savePlots(const unsigned int nH2,
     	       leg_Timing[iH], ptstats_Timing[iH],
     	       plots.h1_exclusionLeft_Timing[iH], plots.h1_exclusionRight_Timing[iH]);
     cc_Timing[iH] -> Write();
-    // tmp
-    cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.png").c_str());
     if(drawPlots){
       cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.png").c_str());
       cc_Timing[iH] -> SaveAs((outputFolder + flag + "_channel_" + channel.str() + "_Timing.pdf").c_str());
