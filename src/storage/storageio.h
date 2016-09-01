@@ -87,6 +87,8 @@ private:
   Double_t hitChi2[MAX_HITS];
   Double_t hitIsHit[MAX_HITS];
   Double_t hitValidFit[MAX_HITS];
+  Double_t hitLowFreqFFT[MAX_HITS];
+  Double_t hitLowFreqFFTPhase[MAX_HITS];    
   
   VarType hitValueType;    
   VarType hitTimingType;
@@ -139,7 +141,9 @@ private:
   TBranch* bHitInCluster;
   TBranch* bHitChi2;
   TBranch* bHitIsHit;
-  TBranch* bHitValidFit;  
+  TBranch* bHitValidFit;
+  TBranch* bHitLowFreqFFT;
+  TBranch* bHitLowFreqFFTPhase;  
 
   TBranch* bNumClusters;
   TBranch* bClusterPixX;

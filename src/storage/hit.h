@@ -20,6 +20,8 @@ private:
   double _t0; // start of hit detection
   int _isHit; // is a hit
   int _isValidFit; // is a valid fit
+  double _lowFreqFFT; // FFT magnitude
+  double _lowFreqFFTPhase; // FFT phase
   double _Chi2; // is a valid fit
   
   Cluster* _cluster; // The cluster containing this hit
@@ -48,6 +50,8 @@ public:
 
   inline void setIsHit(int isHit) { _isHit = isHit; }
   inline void setValidFit(int isValidFit) { _isValidFit = isValidFit; }
+  inline void setLowFreqFFT(double LowFreqFFT) { _lowFreqFFT = LowFreqFFT; }
+  inline void setLowFreqFFTPhase(double LowFreqFFTPhase) { _lowFreqFFTPhase = LowFreqFFTPhase; }    
   inline void setChi2(double chi2) { _Chi2 = chi2; }      
 
   inline unsigned int getPixX() const { return _pixX; }
@@ -62,6 +66,8 @@ public:
 
   inline int getIsHit() const { return _isHit; }
   inline int getValidFit() const { return _isValidFit; }
+  inline double getLowFreqFFT() const { return _lowFreqFFT; }
+  inline double getLowFreqFFTPhase() const { return _lowFreqFFTPhase; }    
   inline double getChi2() const { return _Chi2; }
 
   friend class Plane;     // Access set plane method

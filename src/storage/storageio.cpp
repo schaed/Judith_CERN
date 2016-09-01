@@ -138,22 +138,31 @@ namespace Storage {
 	  }
       }
 
-    return event;
-  }
-
-  void StorageIO::writeEvent(Event* event)
-  {
-  
-    if (_fileMode == INPUT) throw "StorageIO: can't write event in input mode";
-
-    timeStamp = event->getTimeStamp();
-    frameNumber = event->getFrameNumber();
-    triggerOffset = event->getTriggerOffset();
-    triggerInfo = event->getTriggerInfo();
-    invalid = event->getInvalid();
-
-    numTracks = event->getNumTracks();
-    if (numTracks > MAX_TRACKS) throw "StorageIO: event exceeds MAX_TRACKS";
+      // cut on hits: valid fit & is hit
+      //std::cout << "adding hit: " << nhit << " branch: " << bHitIsHit << " vf: " << bHitValidFit
+      //	<< std::endl;
+	//	<< " hit: " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
+      if(_numPlanes==1 && bHitIsHit && bHitValidFit && (hitIsHit[nhit]<0.5 || hitValidFit[nhit]<0.5)) continue;
+      //if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.005 && hitT0[nhit]>180.0 && hitT0[nhit]<240.0 && hitTiming[nhit]<100.0)) continue;
+      // Run 804
+      if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.003 && hitT0[nhit]>2-0.0 && hitT0[nhit]<280.0 && hitTiming[nhit]>15.0 && hitTiming[nhit]<60.0)) continue;      
+      //std::cout << "pass " << std::endl;
+      Hit* hit = event->newHit(nplane);
+      hit->setPix(hitPixX[nhit], hitPixY[nhit]);
+      hit->setPos(hitPosX[nhit], hitPosY[nhit], hitPosZ[nhit]);
+      hit->setT0(hitT0[nhit]);
+      if(hitValueType==kInt)      
+	hitValue[nhit] = (double)hitValueInt[nhit];
+      hit->setValue(hitValue[nhit]);
+      if(hitTimingType==kInt)	
+	hitTiming[nhit] = (double)hitTimingInt[nhit];      
+      hit->setTiming(hitTiming[nhit]);
+      
+      if(bHitChi2) hit->setChi2(hitChi2[nhit]);
+      if(bHitIsHit) hit->setIsHit(int(hitIsHit[nhit]));
+      if(bHitValidFit) hit->setValidFit(int(hitValidFit[nhit]));
+      if(bHitLowFreqFFT) hit->setLowFreqFFT(int(hitLowFreqFFT[nhit]));
+      if(bHitLowFreqFFTPhase) hit->setLowFreqFFTPhase(int(hitLowFreqFFTPhase[nhit]));            
 
     // Set the object track values into the arrays for writing to the root file
     for (int ntrack = 0; ntrack < numTracks; ntrack++)
@@ -241,8 +250,57 @@ namespace Storage {
 
   Long64_t StorageIO::getNumEvents() const
   {
-    assert(_fileMode != OUTPUT && "StorageIO: can't get number of entries in output mode");
-    return _numEvents;
+    Plane* plane = event->getPlane(nplane);
+
+    numClusters = plane->getNumClusters();
+    if (numClusters > MAX_CLUSTERS) throw "StorageIO: event exceeds MAX_CLUSTERS";
+
+    // Set the object cluster values into the arrays for writig into the root file
+    for (int ncluster = 0; ncluster < numClusters; ncluster++)
+    {
+      Cluster* cluster = plane->getCluster(ncluster);
+      clusterPixX[ncluster] = cluster->getPixX();
+      clusterPixY[ncluster] = cluster->getPixY();
+      clusterPixErrX[ncluster] = cluster->getPixErrX();
+      clusterPixErrY[ncluster] = cluster->getPixErrY();
+      clusterPosX[ncluster] = cluster->getPosX();
+      clusterPosY[ncluster] = cluster->getPosY();
+      clusterPosZ[ncluster] = cluster->getPosZ();
+      clusterPosErrX[ncluster] = cluster->getPosErrX();
+      clusterPosErrY[ncluster] = cluster->getPosErrY();
+      clusterPosErrZ[ncluster] = cluster->getPosErrZ();
+      clusterInTrack[ncluster] = cluster->getTrack() ? cluster->getTrack()->getIndex() : -1;
+    }
+
+    numHits = plane->getNumHits();
+    if (numHits > MAX_HITS) throw "StorageIO: event exceeds MAX_HITS";
+
+    // Set the object hit values into the arrays for writing into the root file
+    for (int nhit = 0; nhit < numHits; nhit++)
+    {
+      Hit* hit = plane->getHit(nhit);
+      hitPixX[nhit] = hit->getPixX();
+      hitPixY[nhit] = hit->getPixY();
+      hitPosX[nhit] = hit->getPosX();
+      hitPosY[nhit] = hit->getPosY();
+      hitPosZ[nhit] = hit->getPosZ();
+      hitValue[nhit] = hit->getValue();
+      hitT0[nhit] = hit->getT0();      
+      hitTiming[nhit] = hit->getTiming();
+      hitInCluster[nhit] = hit->getCluster() ? hit->getCluster()->getIndex() : -1;
+      hitIsHit[nhit] = hit->getIsHit() ? 1.0: 0.0;
+      hitValidFit[nhit] = hit->getValidFit() ? 1.0: 0.0; 
+      hitLowFreqFFT[nhit] = hit->getLowFreqFFT();
+      hitLowFreqFFTPhase[nhit] = hit->getLowFreqFFTPhase();
+      hitChi2[nhit] = hit->getChi2();
+      //if(!hit->getIsHit() || !hit->getValidFit()) { plane->removeHit(nhit); --nhit; }//bHitIsHit
+    }
+
+    if (nplane >= _hits.size()) throw "StorageIO: event has too many planes for the storage";
+
+    // Fill the plane by plane trees for this plane
+    if (_hits.at(nplane)) _hits.at(nplane)->Fill();
+    if (_clusters.at(nplane)) _clusters.at(nplane)->Fill();
   }
 
   unsigned int StorageIO::getNumPlanes() const { return _numPlanes; }
@@ -306,47 +364,49 @@ namespace Storage {
 	    hits->Branch("PosY", hitPosY, "HitPosY[NHits]/D");
 	    hits->Branch("PosZ", hitPosZ, "HitPosZ[NHits]/D");
       
-	    hits->Branch("IsHit", hitIsHit, "HitIsHit[NHits]/D");
-	    hits->Branch("ValidFit", hitValidFit, "HitValidFit[NHits]/D");
-	    hits->Branch("Chi2", hitChi2, "HitChi2[NHits]/D");      
+      hits->Branch("IsHit", hitIsHit, "HitIsHit[NHits]/D");
+      hits->Branch("ValidFit", hitValidFit, "HitValidFit[NHits]/D");
+      hits->Branch("LowFreqFFT", hitLowFreqFFT, "HitLowFreqFFT[NHits]/D");
+      hits->Branch("LowFreqFFTPhase", hitLowFreqFFTPhase, "HitLowFreqFFTPhase[NHits]/D");            
+      hits->Branch("Chi2", hitChi2, "HitChi2[NHits]/D");      
 
-	    clusters->Branch("NClusters", &numClusters, "NClusters/I");
-	    clusters->Branch("PixX", clusterPixX, "ClusterPixX[NClusters]/D");
-	    clusters->Branch("PixY", clusterPixY, "ClusterPixY[NClusters]/D");
-	    clusters->Branch("PixErrX", clusterPixErrX, "ClusterPixErrX[NClusters]/D");
-	    clusters->Branch("PixErrY", clusterPixErrY, "ClusterPixErrY[NClusters]/D");
-	    clusters->Branch("InTrack", clusterInTrack, "ClusterInTrack[NClusters]/I");
-	    clusters->Branch("PosX", clusterPosX, "ClusterPosX[NClusters]/D");
-	    clusters->Branch("PosY", clusterPosY, "ClusterPosY[NClusters]/D");
-	    clusters->Branch("PosZ", clusterPosZ, "ClusterPosZ[NClusters]/D");
-	    clusters->Branch("PosErrX", clusterPosErrX, "ClusterPosErrX[NClusters]/D");
-	    clusters->Branch("PosErrY", clusterPosErrY, "ClusterPosErrY[NClusters]/D");
-	    clusters->Branch("PosErrZ", clusterPosErrZ, "ClusterPosErrZ[NClusters]/D");
-	  }
+      clusters->Branch("NClusters", &numClusters, "NClusters/I");
+      clusters->Branch("PixX", clusterPixX, "ClusterPixX[NClusters]/D");
+      clusters->Branch("PixY", clusterPixY, "ClusterPixY[NClusters]/D");
+      clusters->Branch("PixErrX", clusterPixErrX, "ClusterPixErrX[NClusters]/D");
+      clusters->Branch("PixErrY", clusterPixErrY, "ClusterPixErrY[NClusters]/D");
+      clusters->Branch("InTrack", clusterInTrack, "ClusterInTrack[NClusters]/I");
+      clusters->Branch("PosX", clusterPosX, "ClusterPosX[NClusters]/D");
+      clusters->Branch("PosY", clusterPosY, "ClusterPosY[NClusters]/D");
+      clusters->Branch("PosZ", clusterPosZ, "ClusterPosZ[NClusters]/D");
+      clusters->Branch("PosErrX", clusterPosErrX, "ClusterPosErrX[NClusters]/D");
+      clusters->Branch("PosErrY", clusterPosErrY, "ClusterPosErrY[NClusters]/D");
+      clusters->Branch("PosErrZ", clusterPosErrZ, "ClusterPosErrZ[NClusters]/D");
+    }
 
-	_file->cd();
-	_tracks = new TTree("Tracks", "Track parameters");
-	_eventInfo = new TTree("Event", "Event information");
+    _file->cd();
+    _tracks = new TTree("Tracks", "Track parameters");
+    _eventInfo = new TTree("Event", "Event information");
 
-	_eventInfo->Branch("TimeStamp", &timeStamp, "TimeStamp/l");
-	_eventInfo->Branch("FrameNumber", &frameNumber, "FrameNumber/l");
-	_eventInfo->Branch("TriggerOffset", &triggerOffset, "TriggerOffset/I");
-	_eventInfo->Branch("TriggerInfo", &triggerInfo, "TriggerInfo/I");
-	_eventInfo->Branch("Invalid", &invalid, "Invalid/O");
+    _eventInfo->Branch("TimeStamp", &timeStamp, "TimeStamp/l");
+    _eventInfo->Branch("FrameNumber", &frameNumber, "FrameNumber/l");
+    _eventInfo->Branch("TriggerOffset", &triggerOffset, "TriggerOffset/I");
+    _eventInfo->Branch("TriggerInfo", &triggerInfo, "TriggerInfo/I");
+    _eventInfo->Branch("Invalid", &invalid, "Invalid/O");
 
-	_tracks->Branch("NTracks", &numTracks, "NTracks/I");
-	_tracks->Branch("SlopeX", trackSlopeX, "TrackSlopeX[NTracks]/D");
-	_tracks->Branch("SlopeY", trackSlopeY, "TrackSlopeY[NTracks]/D");
-	_tracks->Branch("SlopeErrX", trackSlopeErrX, "TrackSlopeErrX[NTracks]/D");
-	_tracks->Branch("SlopeErrY", trackSlopeErrY, "TrackSlopeErrY[NTracks]/D");
-	_tracks->Branch("OriginX", trackOriginX, "TrackOriginX[NTracks]/D");
-	_tracks->Branch("OriginY", trackOriginY, "TrackOriginY[NTracks]/D");
-	_tracks->Branch("OriginErrX", trackOriginErrX, "TrackOriginErrX[NTracks]/D");
-	_tracks->Branch("OriginErrY", trackOriginErrY, "TrackOriginErrY[NTracks]/D");
-	_tracks->Branch("CovarianceX", trackCovarianceX, "TrackCovarianceX[NTracks]/D");
-	_tracks->Branch("CovarianceY", trackCovarianceY, "TrackCovarianceY[NTracks]/D");
-	_tracks->Branch("Chi2", trackChi2, "TrackChi2[NTracks]/D");
-      }
+    _tracks->Branch("NTracks", &numTracks, "NTracks/I");
+    _tracks->Branch("SlopeX", trackSlopeX, "TrackSlopeX[NTracks]/D");
+    _tracks->Branch("SlopeY", trackSlopeY, "TrackSlopeY[NTracks]/D");
+    _tracks->Branch("SlopeErrX", trackSlopeErrX, "TrackSlopeErrX[NTracks]/D");
+    _tracks->Branch("SlopeErrY", trackSlopeErrY, "TrackSlopeErrY[NTracks]/D");
+    _tracks->Branch("OriginX", trackOriginX, "TrackOriginX[NTracks]/D");
+    _tracks->Branch("OriginY", trackOriginY, "TrackOriginY[NTracks]/D");
+    _tracks->Branch("OriginErrX", trackOriginErrX, "TrackOriginErrX[NTracks]/D");
+    _tracks->Branch("OriginErrY", trackOriginErrY, "TrackOriginErrY[NTracks]/D");
+    _tracks->Branch("CovarianceX", trackCovarianceX, "TrackCovarianceX[NTracks]/D");
+    _tracks->Branch("CovarianceY", trackCovarianceY, "TrackCovarianceY[NTracks]/D");
+    _tracks->Branch("Chi2", trackChi2, "TrackChi2[NTracks]/D");
+  }
 
     // In input mode,
     if (_fileMode == INPUT)
@@ -430,66 +490,24 @@ namespace Storage {
 		  cout<<"ERROR WHILE READING THE HITTIME"<<endl;
 		}
 	
-		//***********************
-		if(hits->GetBranchStatus("HitInCluster"))
-		  hits->SetBranchAddress("HitInCluster", hitInCluster, &bHitInCluster);
-		else
-		  hits->SetBranchAddress("InCluster", hitInCluster, &bHitInCluster);	
-		hits->SetBranchAddress("PosX", hitPosX, &bHitPosX);
-		hits->SetBranchAddress("PosY", hitPosY, &bHitPosY);
-		hits->SetBranchAddress("PosZ", hitPosZ, &bHitPosZ);
-		if(hits->GetBranch("Chi2")) hits->SetBranchAddress("Chi2", hitChi2, &bHitChi2);
-		else bHitChi2=NULL;
-		if(hits->GetBranch("IsHit")) hits->SetBranchAddress("IsHit", hitIsHit, &bHitIsHit);
-		else bHitIsHit=NULL;
-		if(hits->GetBranch("ValidFit")) hits->SetBranchAddress("ValidFit", hitValidFit, &bHitValidFit);
-		else bHitValidFit=NULL;
-	      }
-
-	    if (clusters)
-	      {
-		clusters->SetBranchAddress("NClusters", &numClusters, &bNumClusters);
-		clusters->SetBranchAddress("PixX", clusterPixX, &bClusterPixX);
-		clusters->SetBranchAddress("PixY", clusterPixY, &bClusterPixY);
-		clusters->SetBranchAddress("PixErrX", clusterPixErrX, &bClusterPixErrX);
-		clusters->SetBranchAddress("PixErrY", clusterPixErrY, &bClusterPixErrY);
-		clusters->SetBranchAddress("InTrack", clusterInTrack, &bClusterInTrack);
-		clusters->SetBranchAddress("PosX", clusterPosX, &bClusterPosX);
-		clusters->SetBranchAddress("PosY", clusterPosY, &bClusterPosY);
-		clusters->SetBranchAddress("PosZ", clusterPosZ, &bClusterPosZ);
-		clusters->SetBranchAddress("PosErrX", clusterPosErrX, &bClusterPosErrX);
-		clusters->SetBranchAddress("PosErrY", clusterPosErrY, &bClusterPosErrY);
-		clusters->SetBranchAddress("PosErrZ", clusterPosErrZ, &bClusterPosErrZ);
-	      }
-	  }
-
-	_file->GetObject("Tracks", _tracks);
-	_file->GetObject("Event", _eventInfo);
-
-	if (_eventInfo)
-	  {
-	    _eventInfo->SetBranchAddress("TimeStamp", &timeStamp, &bTimeStamp);
-	    _eventInfo->SetBranchAddress("FrameNumber", &frameNumber, &bFrameNumber);
-	    _eventInfo->SetBranchAddress("TriggerOffset", &triggerOffset, &bTriggerOffset);
-	    _eventInfo->SetBranchAddress("TriggerInfo", &triggerInfo, &bTriggerInfo);
-	    _eventInfo->SetBranchAddress("Invalid", &invalid, &bInvalid);
-	  }
-
-	if (_tracks)
-	  {
-	    _tracks->SetBranchAddress("NTracks", &numTracks, &bNumTracks);
-	    _tracks->SetBranchAddress("SlopeX", trackSlopeX, &bTrackSlopeX);
-	    _tracks->SetBranchAddress("SlopeY", trackSlopeY, &bTrackSlopeY);
-	    _tracks->SetBranchAddress("SlopeErrX", trackSlopeErrX, &bTrackSlopeErrX);
-	    _tracks->SetBranchAddress("SlopeErrY", trackSlopeErrY, &bTrackSlopeErrY);
-	    _tracks->SetBranchAddress("OriginX", trackOriginX, &bTrackOriginX);
-	    _tracks->SetBranchAddress("OriginY", trackOriginY, &bTrackOriginY);
-	    _tracks->SetBranchAddress("OriginErrX", trackOriginErrX, &bTrackOriginErrX);
-	    _tracks->SetBranchAddress("OriginErrY", trackOriginErrY, &bTrackOriginErrY);
-	    _tracks->SetBranchAddress("CovarianceX", trackCovarianceX, &bTrackCovarianceX);
-	    _tracks->SetBranchAddress("CovarianceY", trackCovarianceY, &bTrackCovarianceY);
-	    _tracks->SetBranchAddress("Chi2", trackChi2, &bTrackChi2);
-	  }
+	//***********************
+        if(hits->GetBranchStatus("HitInCluster"))
+	  hits->SetBranchAddress("HitInCluster", hitInCluster, &bHitInCluster);
+	else
+	  hits->SetBranchAddress("InCluster", hitInCluster, &bHitInCluster);	
+        hits->SetBranchAddress("PosX", hitPosX, &bHitPosX);
+        hits->SetBranchAddress("PosY", hitPosY, &bHitPosY);
+        hits->SetBranchAddress("PosZ", hitPosZ, &bHitPosZ);
+        if(hits->GetBranch("Chi2")) hits->SetBranchAddress("Chi2", hitChi2, &bHitChi2);
+	else bHitChi2=NULL;
+        if(hits->GetBranch("IsHit")) hits->SetBranchAddress("IsHit", hitIsHit, &bHitIsHit);
+	else bHitIsHit=NULL;
+        if(hits->GetBranch("ValidFit")) hits->SetBranchAddress("ValidFit", hitValidFit, &bHitValidFit);
+	else bHitValidFit=NULL;
+        if(hits->GetBranch("LowFreqFFT")) hits->SetBranchAddress("LowFreqFFT", hitLowFreqFFT, &bHitLowFreqFFT);
+	else bHitLowFreqFFT=NULL;
+        if(hits->GetBranch("LowFreqFFTPhase")) hits->SetBranchAddress("LowFreqFFTPhase", hitLowFreqFFTPhase, &bHitLowFreqFFTPhase);
+	else bHitLowFreqFFTPhase=NULL;
       }
 
     if (_numPlanes < 1) throw "StorageIO: didn't initialize any planes";
