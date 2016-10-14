@@ -92,7 +92,7 @@ Event* StorageIO::readEvent(Long64_t n)
         cluster->setTrack(track);
       }
     }
-    //cout << "numHits " << numHits <<endl;
+    //if(numHits) cout << "numHits " << numHits <<endl;
     // Kill if there are no hits for Tower Jazz, only for 1 plane dut
     if(bHitIsHit && bHitValidFit && numHits==0 && _numPlanes==1) event->setInvalid(true);
     
@@ -107,14 +107,25 @@ Event* StorageIO::readEvent(Long64_t n)
       }
 
       // cut on hits: valid fit & is hit
-      //std::cout << "adding hit: " << nhit << " branch: " << bHitIsHit << " vf: " << bHitValidFit
-      //	<< std::endl;
+      //if(_numPlanes==1) std::cout << "adding hit: " << nhit << " branch: " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit]
+      //			  << std::endl;
 	//	<< " hit: " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
-      if(_numPlanes==1 && bHitIsHit && bHitValidFit && (hitIsHit[nhit]<0.5 || hitValidFit[nhit]<0.5)) continue;
+      //if(_numPlanes==1 && bHitIsHit && bHitValidFit && (hitIsHit[nhit]<0.5 || hitValidFit[nhit]<0.5)) continue;
       //if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.005 && hitT0[nhit]>180.0 && hitT0[nhit]<240.0 && hitTiming[nhit]<100.0)) continue;
       // Run 804
-      if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.003 && hitT0[nhit]>2-0.0 && hitT0[nhit]<280.0 && hitTiming[nhit]>15.0 && hitTiming[nhit]<60.0)) continue;      
-      //std::cout << "pass " << std::endl;
+      //if(_numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.003 && hitT0[nhit]>190.0 && hitT0[nhit]<320.0 && hitTiming[nhit]>5.0 && hitTiming[nhit]<200.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>2.0)) continue;
+      // random
+      //std::cout << "frameNumber: " << frameNumber << std::endl;
+      //if (_numPlanes==1 && nhit>-3.5) std::cout << "Before " << nhit << " charge: " << hitValue[nhit] << " " <<  hitLowFreqFFT[nhit]
+      //				        << " " << hitT0[nhit] << " " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit]
+      //				       << " " <<  hitTiming[nhit] << std::endl;      
+      //if (nhit<4.5) continue;
+      if(numHits>10 && _numPlanes==1){
+	if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.003 && hitT0[nhit]>80.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.5 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.6)) continue;
+	else if(nhit>3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>50.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.05)) continue;
+      }
+      //if(_numPlanes==1) std::cout << "   pass " << nhit << " charge: " << hitValue[nhit] << " " <<  hitLowFreqFFT[nhit]
+      //		  << " " << hitT0[nhit] << " " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
       Hit* hit = event->newHit(nplane);
       hit->setPix(hitPixX[nhit], hitPixY[nhit]);
       hit->setPos(hitPosX[nhit], hitPosY[nhit], hitPosZ[nhit]);
@@ -127,16 +138,16 @@ Event* StorageIO::readEvent(Long64_t n)
       hit->setTiming(hitTiming[nhit]);
       
       if(bHitChi2) hit->setChi2(hitChi2[nhit]);
-      if(bHitIsHit) hit->setIsHit(int(hitIsHit[nhit]));
+      if(bHitIsHit) hit->setIsHit(int(hitIsHit[nhit])); 
       if(bHitValidFit) hit->setValidFit(int(hitValidFit[nhit]));
-      if(bHitLowFreqFFT) hit->setLowFreqFFT(int(hitLowFreqFFT[nhit]));
-      if(bHitLowFreqFFTPhase) hit->setLowFreqFFTPhase(int(hitLowFreqFFTPhase[nhit]));            
+      if(bHitLowFreqFFT) hit->setLowFreqFFT(hitLowFreqFFT[nhit]);
+      if(bHitLowFreqFFTPhase) hit->setLowFreqFFTPhase(hitLowFreqFFTPhase[nhit]);
 
       // If this hit is in a cluster, mark this (and the clusters tree is active)
       if (_clusters.at(nplane) && hitInCluster[nhit] >= 0)
       {
         Cluster* cluster = event->getCluster(hitInCluster[nhit]);
-	//std::cout << "add Hit StorageIO..." << nhit << " timing: " << hitTiming[nhit] << " isHit: " << hitIsHit[nhit] << " validFit: " << hitValidFit[nhit] << std::endl;
+	//if (_numPlanes==1&& nhit>4.5) std::cout << "add Hit StorageIO..." << nhit << " timing: " << hitTiming[nhit] << " isHit: " << hitIsHit[nhit] << " validFit: " << hitValidFit[nhit] << std::endl;
         cluster->addHit(hit);
       }
     }

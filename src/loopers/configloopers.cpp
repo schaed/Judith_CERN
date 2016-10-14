@@ -7,6 +7,7 @@
 #include "finealigndut.h"
 #include "synchronize.h"
 #include "synchronizerms.h"
+#include "synchronizeBunchXing.h"
 #include "noisescan.h"
 #include "../configparser.h"
 
@@ -176,6 +177,36 @@ void configSynchronize(const ConfigParser& config, Synchronize& sync)
 
     if (row->isHeader) continue;
     if (row->header.compare("SynchronizeRMS")) continue;
+
+    if (!row->key.compare("sync sample"))
+      sync.setSyncSample(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("max offset"))
+      sync.setMaxOffset(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("threshold"))
+      sync.setThreshold(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("buffer size"))
+      sync.setBufferSize(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("pre discards"))
+      sync.setPreDiscards(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("max regular fails"))
+      sync.setMaxConsecutiveFails(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("max large attempts"))
+      sync.setMaxLargeSyncAttempts(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("display"))
+      sync.setDisplayDistributions(ConfigParser::valueToLogical(row->value));
+    else
+      throw "Loopers: can't parse synchronize row";
+  }
+}
+
+  void configSynchronizeBunchXing(const ConfigParser& config, SynchronizeBunchXing& sync)
+{
+  for (unsigned int i = 0; i < config.getNumRows(); i++)
+  {
+    const ConfigParser::Row* row = config.getRow(i);
+
+    if (row->isHeader) continue;
+    if (row->header.compare("SynchronizeBunchXing")) continue;
 
     if (!row->key.compare("sync sample"))
       sync.setSyncSample(ConfigParser::valueToNumerical(row->value));

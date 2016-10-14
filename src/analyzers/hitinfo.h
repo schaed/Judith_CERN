@@ -19,6 +19,11 @@ class HitInfo : public SingleAnalyzer
 private:
   std::vector<TH1D*> _lvl1;
   std::vector<TH1D*> _tot;
+  std::vector<TH1D*> _charge;
+  std::vector<TH1D*> _t0;
+  std::vector<TH1D*> _timing;  
+  std::vector<TH1D*> _FFTMag;  
+  std::vector<TH1D*> _FFTPhs;  
   std::vector<TH2D*> _totMap;
   std::vector<TH2D*> _totMapCnt;
 

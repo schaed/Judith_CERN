@@ -40,6 +40,7 @@
 #include "loopers/processevents.h"
 #include "loopers/synchronize.h"
 #include "loopers/synchronizerms.h"
+#include "loopers/synchronizeBunchXing.h"
 #include "loopers/configloopers.h"
 #include "configparser.h"
 #include "inputargs.h"
@@ -497,6 +498,51 @@ void synchronizeRMS(const char* refInputName, const char* dutInputName,
   }
 }
 
+void synchronizeBunchXing(const char* refInputName, const char* dutInputName,
+                 const char* refOutputName, const char* dutOutputName,
+                 ULong64_t startEvent, ULong64_t numEvents,
+                 const char* refDeviceCfg, const char* dutDeviceCfg,
+                 const char* tbCfg)
+{
+  try
+  {
+
+    ConfigParser runConfig(tbCfg);
+    ConfigParser refConfig(refDeviceCfg);
+    Mechanics::Device* refDevice = Mechanics::generateDevice(refConfig);
+
+    ConfigParser dutConfig(dutDeviceCfg);
+    Mechanics::Device* dutDevice = Mechanics::generateDevice(dutConfig);
+ 
+    unsigned int inMask = Storage::Flags::TRACKS | Storage::Flags::CLUSTERS;
+
+    Storage::StorageIO refInput(refInputName, Storage::INPUT, 0, inMask);
+    Storage::StorageIO dutInput(dutInputName, Storage::INPUT, 0, inMask);
+    Storage::StorageIO refOutput(refOutputName, Storage::OUTPUT,
+                                 refInput.getNumPlanes());
+
+    Storage::StorageIO dutOutput(dutOutputName, Storage::OUTPUT,
+                                 dutInput.getNumPlanes());
+
+    if (refDevice->getAlignment()) refDevice->getAlignment()->readFile();
+    if (dutDevice->getAlignment()) dutDevice->getAlignment()->readFile();
+    
+    Loopers::SynchronizeBunchXing looper(refDevice, dutDevice, &refOutput, &dutOutput,
+				   &refInput, &dutInput, startEvent, numEvents);
+
+    Loopers::configSynchronizeBunchXing(runConfig, looper);
+    looper.loop();
+
+    // cleanup
+    delete refDevice;
+    delete dutDevice;
+  }
+  catch (const char* e)
+  {
+    cout << "ERR :: " << e << endl;
+  }
+}
+
 void analysisDUT(const char* refInputName, const char* dutInputName,
                  ULong64_t startEvent, ULong64_t numEvents,
                  const char* refDeviceCfg, const char* dutDeviceCfg,
@@ -691,7 +737,23 @@ int main(int argc, char** argv)
                 inArgs.getCfgRef().c_str(),
                 inArgs.getCfgDUT().c_str(),
                 inArgs.getCfgTestbeam().c_str() );
-  }  
+  }
+  else if ( !inArgs.getCommand().compare("synchronizeBunchXing") )
+  {
+    synchronizeBunchXing( // synchronizes DUT with Ref (2 inputs, 2 outputs)
+                 // start at EvOffset, do NumEvents (0=ALL)
+                 // 2 configs (Ref and DUT) synched data goes to
+                 // OutputRef/DUT
+                inArgs.getInputRef().c_str(),
+                inArgs.getInputDUT().c_str(),
+                inArgs.getOutputRef().c_str(),
+                inArgs.getOutputDUT().c_str(),
+                inArgs.getEventOffset(),
+                inArgs.getNumEvents(),
+                inArgs.getCfgRef().c_str(),
+                inArgs.getCfgDUT().c_str(),
+                inArgs.getCfgTestbeam().c_str() );
+  }    
   else if ( !inArgs.getCommand().compare("noiseScan") )
   {
     noiseScan( // produse a noise mask with a specified cut (prompted for)

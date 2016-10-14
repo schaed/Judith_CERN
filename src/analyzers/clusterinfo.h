@@ -19,6 +19,9 @@ class ClusterInfo : public SingleAnalyzer
 private:
   std::vector<TH1D*> _clusterSize;
   std::vector<TH1D*> _tot;
+  std::vector<TH1D*> _charge;
+  std::vector<TH1D*> _t0;
+  std::vector<TH1D*> _timing;
   std::vector<TH2D*> _totSize;
   std::vector<TH1D*> _clustersVsTime;
   std::vector<TH1D*> _totVsTime;

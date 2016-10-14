@@ -43,7 +43,7 @@ void ProcessEvents::loop()
   for (ULong64_t nevent = _startEvent; nevent <= _endEvent; ++nevent)
   {
     Storage::Event* refEvent = _refStorage->readEvent(nevent);
-
+    //cout << "nevt: " << nevent << endl;
     if (refEvent->getNumClusters())
       throw "ProcessEvents: can't recluster an event, mask the tree in the input";
     for (unsigned int nplane = 0; nplane < refEvent->getNumPlanes(); nplane++)

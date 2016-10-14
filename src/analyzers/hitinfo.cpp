@@ -52,6 +52,11 @@ void HitInfo::processEvent(const Storage::Event* event)
 
       _lvl1.at(nplane)->Fill(hit->getTiming());
       _tot.at(nplane)->Fill(hit->getValue());
+      _charge.at(nplane)->Fill(hit->getValue());
+      _timing.at(nplane)->Fill(hit->getTiming());
+      _t0.at(nplane)->Fill(hit->getT0());
+      _FFTMag.at(nplane)->Fill(hit->getLowFreqFFT());
+      _FFTPhs.at(nplane)->Fill(hit->getLowFreqFFTPhase());      
       _totMap.at(nplane)->Fill(hit->getPixX(), hit->getPixY(), hit->getValue());
       _totMapCnt.at(nplane)->Fill(hit->getPixX(), hit->getPixY());
     }
@@ -123,6 +128,66 @@ HitInfo::HitInfo(const Mechanics::Device* device,
     tot->SetDirectory(plotDir);
     _tot.push_back(tot);
 
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "Charge" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Clustered Charge Distribution"
+          << ";Charge [V]"
+          << ";Hits";
+    TH1D* chg = new TH1D(name.str().c_str(), title.str().c_str(),
+                         200, 0.0, 0.4);
+    chg->SetDirectory(plotDir);
+    _charge.push_back(chg);
+
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "T0" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Hit Timing Distribution"
+          << ";T0 [ns]"
+          << ";Hits";
+    TH1D* t0 = new TH1D(name.str().c_str(), title.str().c_str(),
+			1000, 0.0, 1000.0);
+    t0->SetDirectory(plotDir);
+    _t0.push_back(t0);    
+
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "Timing" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Charge Collection Time Distribution"
+          << ";Charge Collection Time [ns]"
+          << ";Hits";
+    TH1D* timing = new TH1D(name.str().c_str(), title.str().c_str(),
+			200, 0.0, 200.0);
+    timing->SetDirectory(plotDir);
+    _timing.push_back(timing);    
+    
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "FFTMag" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Low Freq. FFT Mag Distribution"
+          << "; Low Freq. FFT Mag [V]"
+          << ";Hits";
+    TH1D* fftmag = new TH1D(name.str().c_str(), title.str().c_str(),
+			    200, 0.0, 10.0);
+    fftmag->SetDirectory(plotDir);
+    _FFTMag.push_back(fftmag);   
+
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "FFTPhs" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Low Freq. FFT Phase Distribution"
+          << ";Low Freq. FFT Phase [rad]"
+          << ";Hits";
+    TH1D* fftphs = new TH1D(name.str().c_str(), title.str().c_str(),
+			    64, -3.2, 3.2);
+    fftphs->SetDirectory(plotDir);
+    _FFTPhs.push_back(fftphs); 
+    
     name.str(""); title.str("");
     name << sensor->getName() << "ToTMap" << _nameSuffix;
     title << sensor->getName() << " ToT Map"

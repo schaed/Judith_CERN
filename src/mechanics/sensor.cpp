@@ -113,9 +113,10 @@ void Sensor::pixelToSpace(double pixX, double pixY,
                           double& x, double& y, double& z) const
 {
   if (pixX >= _numX && pixY >= _numY){
-    std::cout << pixX << " " << _numX
-	      << " "  << pixY << " " << _numY << std::endl;
-    throw "Sensor: requested pixel out of range: "; 
+    
+    //std::cout << pixX << " " << _numX
+    //<< " "  << pixY << " " << _numY << std::endl;
+    //throw "Sensor: requested pixel out of range: "; 
   }
   x = 0, y = 0, z = 0;
 

@@ -10,6 +10,8 @@
 #include <TDirectory.h>
 
 #include "dualanalyzer.h"
+#include "hitinfo.h"
+#include "clusterinfo.h"
 
 namespace Storage { class Event; }
 namespace Mechanics { class Device; }
@@ -44,6 +46,10 @@ private:
   std::vector<TH1D*> _hitResidualyCut;
 
   std::vector<TH1D*> _hitT0;
+  //std::vector<TH1D*> _hitTime;
+  //std::vector<TH1D*> _hitCharge;  
+  //std::vector<TH1D*> _hitFFTMag;  
+  //std::vector<TH1D*> _hitFFTPhs;  
   
   std::vector<TH2D*> _trackResT0;
   std::vector<TH2D*> _trackResCharge;  
@@ -57,6 +63,10 @@ private:
   std::vector<TH1D*> _amplDistCuts;
   std::vector<TH1D*> _amplDistCommon;
 
+  // plot the clusters and hits
+  ClusterInfo *hcluster;
+  HitInfo *hhit;
+  
    // Parameters used during event processing
   const int _relativeToSensor;
 

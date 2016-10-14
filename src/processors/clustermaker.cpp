@@ -20,7 +20,7 @@ void ClusterMaker::addNeighbours(const Storage::Hit* hit, const  Storage::Plane*
   for (unsigned int nhit = 0; nhit < plane->getNumHits(); nhit++)
   {
      Storage::Hit* compare = plane->getHit(nhit);
-
+     //std::cout << "adding a hit " << std::endl;
     // Continue if this hit is already clustered or if it is the one being considered
     if (compare->getCluster() || compare == hit) continue;
 
@@ -54,6 +54,7 @@ void ClusterMaker::generateClusters(Storage::Event* event, unsigned int planeNum
   if (plane->getNumClusters() > 0)
     throw "ClusterMaker: clusters already exist for this hit";
 
+  //if(plane->getNumHits()) std::cout << "NUM: " <<  plane->getNumHits() << std::endl; 
   for (unsigned int nhit = 0; nhit < plane->getNumHits(); nhit++)
   {
      Storage::Hit* hit = plane->getHit(nhit);

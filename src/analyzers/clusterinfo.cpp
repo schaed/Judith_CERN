@@ -51,6 +51,9 @@ void ClusterInfo::processEvent(const Storage::Event* event)
 
       _clusterSize.at(nplane)->Fill(cluster->getNumHits());
       _tot.at(nplane)->Fill(cluster->getValue());
+      _charge.at(nplane)->Fill(cluster->getValue());
+      _t0.at(nplane)->Fill(cluster->getT0());      
+      _timing.at(nplane)->Fill(cluster->getTiming());      
       _totSize.at(nplane)->Fill(cluster->getNumHits(), cluster->getValue());
 
       if (_clustersVsTime.size())
@@ -128,6 +131,42 @@ ClusterInfo::ClusterInfo(const Mechanics::Device* device,
     tot->SetDirectory(plotDir);
     _tot.push_back(tot);
 
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "Charge" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Clustered Charge Distribution"
+          << ";Charge [V]"
+          << ";Clusters";
+    TH1D* chg = new TH1D(name.str().c_str(), title.str().c_str(),
+                         200, 0.0, 0.4);
+    chg->SetDirectory(plotDir);
+    _charge.push_back(chg);
+
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "T0" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Hit Timing Distribution"
+          << ";T0 [ns]"
+          << ";Clusters";
+    TH1D* t0 = new TH1D(name.str().c_str(), title.str().c_str(),
+			1000, 0.0, 1000.0);
+    t0->SetDirectory(plotDir);
+    _t0.push_back(t0);    
+
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "Timing" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Charge Collection Time Distribution"
+          << ";Charge Collection Time [ns]"
+          << ";Clusters";
+    TH1D* timing = new TH1D(name.str().c_str(), title.str().c_str(),
+			200, 0.0, 200.0);
+    timing->SetDirectory(plotDir);
+    _timing.push_back(timing);    
+    
     name.str(""); title.str("");
     name << sensor->getDevice()->getName() << sensor->getName()
          << "ToTVsSize" << _nameSuffix;

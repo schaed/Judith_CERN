@@ -44,7 +44,7 @@ Analyzers::SyncFluctuation* Synchronize::setupAnalyzer()
   for (unsigned int nevent = 0; nevent < rmsSample; nevent++)
   {
     Storage::Event* event = _refStorage->readEvent(nevent);
-    Storage::Event* dutevent = _dutStorage->readEvent(nevent);
+    Storage::Event* dutevent = _dutStorage->readEvent(nevent+14);
     const double diff = (event->getTimeStamp() - lastTimeStamp) /
         (double)_refDevice->getReadOutWindow() / (double)_refDevice->getClockRate();
 
@@ -55,7 +55,9 @@ Analyzers::SyncFluctuation* Synchronize::setupAnalyzer()
   std::cout << "DUT start: " << dutevent->getTimeStamp() << " end: " << lastTimeStampDUT
 	    << " DUT: " <<_dutDevice->getReadOutWindow() << " " <<_dutDevice->getClockRate()
 	    << " diff: " << (dutevent->getTimeStamp() - lastTimeStampDUT) << std::endl;
-    
+
+  std::cout << "Ratio: " << float((event->getTimeStamp() - lastTimeStamp))/float(dutevent->getTimeStamp() - lastTimeStampDUT) << std::endl;
+  
     if (nevent > 0)
       changeRMS += pow(diff, 2);
     lastTimeStamp = event->getTimeStamp();

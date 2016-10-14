@@ -5,7 +5,7 @@ class Pixel:
     def __init__(self, num=0, cut=''):
 
         self.num=num
-        self.hCharge = ROOT.TH1F('charge%s_%s' %(cut,num),'charge%s_%s' %(cut,num),200,0.0,0.2)
+        self.hCharge = ROOT.TH1F('charge%s_%s' %(cut,num),'charge%s_%s' %(cut,num),2000,0.0,0.2)
         self.hT0 = ROOT.TH1F('t0%s_%s' %(cut,num),'t0%s_%s'%(cut,num),1000,0.0,1000.0)
         #self.hTime = ROOT.TH1F('timing%s_%s' %(cut,num),'timing%s_%s' %(cut,num),20000,-10000.0,10000.0)
         self.hTime = ROOT.TH1F('timing%s_%s' %(cut,num),'timing%s_%s' %(cut,num),500,0.0,500.0)
@@ -18,7 +18,7 @@ class Pixel:
         self.hT0.GetYaxis().SetTitle('Events')
         self.hTime.GetXaxis().SetTitle('Charge Collection Time [ns]')
         self.hTime.GetYaxis().SetTitle('Events')
-        self.hMag.GetXaxis().SetTitle('FFT Magnitude of low freq. [ns]')
+        self.hMag.GetXaxis().SetTitle('FFT Magnitude of low freq. [mV]')
         self.hMag.GetYaxis().SetTitle('Events')
         self.hPhs.GetXaxis().SetTitle('FFT Phase of low freq. [rad]')
         self.hPhs.GetYaxis().SetTitle('Events')
@@ -38,20 +38,40 @@ class Pixel:
         #fout.Close()
         
 #f = ROOT.TFile.Open('../../TowerJazz/run_904_tj_W3R13_50um_6V_1DRS.root')
-f = ROOT.TFile.Open('../../TowerJazz/run_804_tj_W3R15_50um_6V.root')
-fout = ROOT.TFile.Open('fout_804_01V_60Time.root','RECREATE')
+#f = ROOT.TFile.Open('../../TowerJazz/run_804_tj_W3R15_50um_6V.root')
+#f = ROOT.TFile.Open('../../TowerJazz/run_804_tj_W3R15_50um_6V_new.root')
+#f = ROOT.TFile.Open('../../TowerJazz/run_868_tj_W3R13_50um_6V_1DRS_new.root')
+#f = ROOT.TFile.Open('../../TowerJazz/test_lowpass.root')
+#f = ROOT.TFile.Open('../../TowerJazz/test_new.root')
+#f = ROOT.TFile.Open('../../TowerJazz/test_new.root')
+#f = ROOT.TFile.Open('../../TowerJazz/run804_new5_sync-analysis-result.root')
+#f = ROOT.TFile.Open('../../TowerJazz/run_32877_tj_W3R13_50um_6V_3DRS.root')
+#fout = ROOT.TFile.Open('run_32877_tj_W3R13_50um_6V_3DRS_fft-analysis-result.root','RECREATE')
+f = ROOT.TFile.Open('../../TowerJazz/test_30k_3.root')
+#f = ROOT.TFile.Open('../../TowerJazz/test_3147.root')
+fout = ROOT.TFile.Open('run_32877_tj_.root','RECREATE')
 
 hits = f.Get('Plane0/Hits')
+events = f.Get('Event')
+fnum=[]
+for i in events:
+    fnum+=[i.FrameNumber]
 ii=0
 pixels=[]
 pixels_15V=[]
 pixels_15V_time=[]
 pixels_15V_t0=[]
+pixels_FFT2=[]
 for h in hits:
 
     if ii%10000==0:
         print 'Event: ',ii
-    ii+=1        
+
+    if fnum[ii]==302 or fnum[ii]==459:
+        print ii,fnum[ii]
+        for p in range(0,h.NHits):
+            print '     ',p, h.Value[p], h.T0[p], h.Timing[p], h.LowFreqFFT[p], h.LowFreqFFTPhase[p]
+    ii+=1
     #if h.NHits==4:
     #    if h.Value[3]<0.0:
     #        continue
@@ -62,6 +82,7 @@ for h in hits:
             pixels_15V+=[Pixel(p,'_Val15V')]
             pixels_15V_time+=[Pixel(p,'_Val15VTime')]
             pixels_15V_t0+=[Pixel(p,'_Val15VT0')]
+            pixels_FFT2+=[Pixel(p,'_FFT2')]            
     for p in range(0,h.NHits):
         #print 'pixel: ',p,' Charge: ',h.Value[p], h.T0[p], h.Timing[p]
         #print 'Charge: ',h.Value[p]
@@ -75,12 +96,14 @@ for h in hits:
         #    continue
         #print ' PASS Charge pixel: ',p,' Charge: ',h.Value[p], h.T0[p], h.Timing[p]
         pixels[p].Fill(h.Value[p], h.T0[p], h.Timing[p], h.LowFreqFFT[p], h.LowFreqFFTPhase[p])
-        if h.Value[p]>0.003:
+        if h.Value[p]>0.001: #0.003
             pixels_15V[p].Fill(h.Value[p], h.T0[p], h.Timing[p], h.LowFreqFFT[p], h.LowFreqFFTPhase[p])
             if h.Timing[p]>15.0 and  h.Timing[p]<60.0:
                 pixels_15V_time[p].Fill(h.Value[p], h.T0[p], h.Timing[p], h.LowFreqFFT[p], h.LowFreqFFTPhase[p])
             if (h.T0[p]<280.0 and h.T0[p]>200.0) and (h.Timing[p]>15.0 and  h.Timing[p]<60.0): 
                 pixels_15V_t0[p].Fill(h.Value[p], h.T0[p], h.Timing[p], h.LowFreqFFT[p], h.LowFreqFFTPhase[p])
+            if (h.LowFreqFFT[p]>2.0 and h.T0[p]>5.0) and (h.Timing[p]>10.0 and  h.Timing[p]<60.0): 
+                pixels_FFT2[p].Fill(h.Value[p], h.T0[p], h.Timing[p], h.LowFreqFFT[p], h.LowFreqFFTPhase[p])
 
 for p in pixels:
     p.Write(fout)
@@ -89,7 +112,9 @@ for p in pixels_15V:
 for p in pixels_15V_time:
     p.Write(fout)
 for p in pixels_15V_t0:
-    p.Write(fout)    
+    p.Write(fout)
+for p in pixels_FFT2:
+    p.Write(fout)        
 fout.Write()
 fout.Close()
 print 'Done'
