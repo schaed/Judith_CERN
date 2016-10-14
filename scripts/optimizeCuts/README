@@ -6,11 +6,12 @@ The function to call is
 defined in optimizedCuts.C.
 The full arguments list is
 
-    int optimizeCuts(const char *fileNameIn, // name of the input root file
-                     const string outputFolder, // name of the output folder (must exist already)
-		     const string flag, // flag for the output plot names
-		     const bool holdPlots = false){ // leaves the TCanvas open at the end of the script
+int optimizeCuts(const char *fileNameIn, // name of the input root file
+                 const string outputFolder, // name of the output folder (must exist already)
+                 const bool drawPlots = false, // if true, plots are also individually saved as .png, .eps and .pdf
+                 const bool holdPlots = false){ // if true leaves the TCanvas open at the end of the script
 
-Define flags that may be modified:
-       #define T0CUTNSIGMA 3. // number of sigmas for T0 cut
-       #define TIMINGCUTFRACTION 0.01 // fractional area for Timing cut
+A few examples in optimizedCuts.C:
+run904()
+run944()
+loop()
