@@ -4,7 +4,8 @@ export PATH="TowerJazz"
 
 # Alignment
 #export ALIG=$PATH/cosmic_000768_000000.root
-export ALIG=$PATH/cosmic_032873_000000.root
+#export ALIG=$PATH/cosmic_032873_000000.root
+export ALIG=$PATH/cosmic_033020_000000.root
 
 # Setpoint specific
 #export DUT=$PATH/DUT
@@ -28,7 +29,7 @@ export ALIG=$PATH/cosmic_032873_000000.root
 #export DUT=$PATH/run_32877_tj_W3R13_50um_6V_3DRS
 #export DUT=$PATH/run_32878_tj_W3R13_50um_6V_3DRS
 #export DUT=$PATH/test_30k
-export DUT=$PATH/test_30k_3
+export DUT=$PATH/run_32878_tj_W3R13_50um_6V_3DRS_fft10
 #export DUT=$PATH/run_32900_tj_W3R13_50um_6V_3DRS
 #export DUT=$PATH/run_868_tj_W3R13_50um_6V_1DRS_fft4
 #export DUT=$PATH/run804_new5
@@ -43,7 +44,8 @@ export DUT=$PATH/test_30k_3
 #export RCE=$PATH/cosmic_000868_000000
 #export RCE=$PATH/cosmic_000804_000000
 #export RCE=$PATH/cosmic_032877_000000
-export RCE=$PATH/cosmic_032878_000000
+#export RCE=$PATH/cosmic_032878_000000
+export RCE=$PATH/cosmic_033020_000000
 #export RCE=$PATH/cosmic_032900_000000
 export RCE_MASKED=${RCE}-mask
 export RCE_PROCC=${RCE}-process
@@ -64,17 +66,18 @@ export DUT_PROCC=${DUT}-process
 export DUTCONFIG=dutTowerJazz.cfg
 
 #export TELECONF=configs/reforig_TowerJazz.cfg
-export TELECONF=configs/reforig_TowerJazz5b.cfg
+#export TELECONF=configs/reforig_TowerJazz5b.cfg
+export TELECONF=configs/reforig_TowerJazz5c.cfg
 
 echo "TowerJazz Efficiency Analysis --- 0 TILT"
 
 echo "-------------------Apply mask"
-#./Judith -c applyMask -i $RCE.root -o ${RCE_MASKED}.root  -r $TELECONF -t configs/globalorig_TowerJazz.cfg #-n 50000
+./Judith -c applyMask -i $RCE.root -o ${RCE_MASKED}.root  -r $TELECONF -t configs/globalorig_TowerJazz.cfg #-n 50000
 
 echo "-------------------syncronization"
 #./Judith -c synchronizeRMS -i ${RCE_MASKED}.root -o ${RCE_MASKED}_sync.root -I $DUT.root -O ${DUT}_sync.root -r $TELECONF -d configs/$DUTCONFIG -t configs/globalorig_TowerJazz.cfg -s 0 #-n 80000
 #./Judith -c synchronizeBunchXing -i ${RCE_MASKED}.root -o ${RCE_MASKED}_sync.root -I $DUT.root -O ${DUT}_sync.root -r $TELECONF -d configs/$DUTCONFIG -t configs/globalorig_TowerJazz.cfg -s 0 #-n 10000
-./Judith -c synchronizeBunchXing -i ${RCE_MASKED}.root -o ${RCE_MASKED}_sync.root -I $DUT.root -O ${DUT}_sync.root -r $TELECONF -d configs/$DUTCONFIG -t configs/globalorig_TowerJazz.cfg -s 0 -n 30000
+./Judith -c synchronizeBunchXing -i ${RCE_MASKED}.root -o ${RCE_MASKED}_sync.root -I $DUT.root -O ${DUT}_sync.root -r $TELECONF -d configs/$DUTCONFIG -t configs/globalorig_TowerJazz.cfg -s 0 #-n 30000
 #./Judith -c synchronize -i ${RCE_MASKED}.root -o ${RCE_MASKED}_sync.root -I $DUT.root -O ${DUT}_sync.root -r $TELECONF -d configs/$DUTCONFIG -t  configs/globalorig_TowerJazz.cfg -s 0 # -n 4000
 
 echo "-------------------CoarseAlign telescope"
@@ -86,18 +89,18 @@ echo "-------------------FineAlign telescope"
 export RCE_MASKED=${RCE_MASKED}_sync
 export DUT=${DUT}_sync
 echo "-------------------CoarseAlign dut"
-#./Judith -c coarseAlignDUT -i ${RCE_MASKED}.root -I ${DUT}.root -r $TELECONF -t configs/globalorig.cfg -d configs/$DUTCONFIG
+./Judith -c coarseAlignDUT -i ${RCE_MASKED}.root -I ${DUT}.root -r $TELECONF -t configs/globalorig.cfg -d configs/$DUTCONFIG
 #echo "-------------------FineAlign dut"
 #./Judith -c fineAlignDUT -i ${RCE_MASKED}.root -I ${DUT}.root -t configs/globalorig.cfg -r $TELECONF -d configs/$DUTCONFIG -R DUT-alignment-result.root -n 50000
 
 
-echo "-------------------process telescope"
+#echo "-------------------process telescope"
 ./Judith -c process -i ${RCE_MASKED}.root -o ${RCE_PROCC}.root -r $TELECONF -t configs/globalorig_TowerJazz.cfg -R ${RCE}-proccess-result.root #-n 50000
-echo "-------------------process dut"
+#echo "-------------------process dut"
 ./Judith -c process -i ${DUT}.root -o ${DUT_PROCC}.root -r configs/$DUTCONFIG -t configs/globalorig.cfg -R ${DUT}-procress-result.root
-#-n 50000
-echo "-------------------Analysis telescope"
+##-n 50000
+#echo "-------------------Analysis telescope"
 ./Judith -c analysis -i ${RCE_PROCC}.root -r $TELECONF -t configs/globalorig.cfg -R ${RCE}-analysis-result.root #-n 50000
-echo "-------------------Analysis dut"
+#echo "-------------------Analysis dut"
 ./Judith -c analysisDUT -i ${RCE_PROCC}.root -I ${DUT_PROCC}.root -r $TELECONF -d configs/$DUTCONFIG -t configs/globalorig_TowerJazz.cfg -R ${DUT}-analysis-result.root #-n 60000
 
