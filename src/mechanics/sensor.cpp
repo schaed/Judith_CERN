@@ -21,6 +21,8 @@ void Sensor::print()
        << "  Rot: " << getRotX() << " , "
                     << getRotY() << " , "
                     << getRotZ() << "\n"
+       << "  FuncX: " << getFrameNumberFuncX() << "\n"
+       << "  FuncY: " << getFrameNumberFuncY() << "\n"
        << "  Cols: " << getNumX() << "\n"
        << "  Rows: " << getNumY() << "\n"
        << "  Pitch X: " << getPitchX() << "\n"
@@ -104,6 +106,7 @@ void Sensor::rotateToGlobal(double& x, double& y, double& z) const
   applyRotation(x, y, z);
 }
 
+  
 void Sensor::rotateToSensor(double& x, double& y, double& z) const
 {
   applyRotation(x, y, z, true);
@@ -113,8 +116,7 @@ void Sensor::pixelToSpace(double pixX, double pixY,
                           double& x, double& y, double& z) const
 {
   if (pixX >= _numX && pixY >= _numY){
-    
-    //std::cout << pixX << " " << _numX
+      //std::cout << pixX << " " << _numX
     //<< " "  << pixY << " " << _numY << std::endl;
     //throw "Sensor: requested pixel out of range: "; 
   }
@@ -130,7 +132,8 @@ void Sensor::pixelToSpace(double pixX, double pixY,
   y -= halfY;
 
   rotateToGlobal(x, y, z);
-
+  //std::cout <<_frameNumber << " " <<  getOffX() << std::endl;
+  // adding the offset from frame number
   x += getOffX();
   y += getOffY();
   z += getOffZ();
@@ -256,8 +259,8 @@ double Sensor::getPitchX() const { return _pitchX; }
 double Sensor::getPitchY() const { return _pitchY; }
 double Sensor::getDepth() const { return _depth; }
 double Sensor::getXox0() const { return _xox0; }
-double Sensor::getOffX() const { return _offX; }
-double Sensor::getOffY() const { return _offY; }
+  double Sensor::getOffX() const { return (_offX  + (f_frameFuncX ? f_frameFuncX->Eval(double(_frameNumber )):0.0)); }
+  double Sensor::getOffY() const { return (_offY + (f_frameFuncY ? f_frameFuncY->Eval(double(_frameNumber )):0.0)); }
 double Sensor::getOffZ() const { return _offZ; }
 double Sensor::getRotX() const { return _rotX; }
 double Sensor::getRotY() const { return _rotY; }
@@ -278,10 +281,11 @@ Sensor::Sensor(unsigned int numX, unsigned int numY, double pitchX, double pitch
                double offX, double offY, double offZ,
                double rotX, double rotY, double rotZ) :
   _numX(numX), _numY(numY), _pitchX(pitchX), _pitchY(pitchY),
-  _depth(depth), _device(device), _name(name), _xox0(xox0),
+  _depth(depth), _device(device),_frameNumber(0), _name(name), _xox0(xox0),
   _offX(offX), _offY(offY), _offZ(offZ),
   _rotX(rotX), _rotY(rotY), _rotZ(rotZ),
-  _sensitiveX(pitchX * numX), _sensitiveY(pitchY * numY), _numNoisyPixels(0)
+  _sensitiveX(pitchX * numX), _sensitiveY(pitchY * numY), _numNoisyPixels(0),
+  m_frameFuncX("0"), m_frameFuncY("0"),f_frameFuncX(0),f_frameFuncY(0)
 {
   assert(device && "Sensor: need to link the sensor back to a device.");
 

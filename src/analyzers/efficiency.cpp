@@ -53,6 +53,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
   //fill in the amplitude distribution histogram
   for (unsigned int nsensor = 0; nsensor < _dutDevice->getNumSensors(); nsensor++)
   {
+    _dutDevice->getSensor(nsensor)->setFrameNumber(refEvent->getFrameNumber());
     for (unsigned int nhit = 0; nhit < dutEvent->getNumHits(); nhit++)
     {
       const Storage::Hit* hit = dutEvent->getHit(nhit);
@@ -146,13 +147,20 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 	//_trackResHitFine.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY());	
 	_trackResHit.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
 	_trackResHitFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());	
-      if((tx - sensor->getOffX())>-150.0 && (tx - sensor->getOffX())<-130.0
-      	 && (ty - sensor->getOffY())>-40.0 && (ty - sensor->getOffY())<20.0){
+      if((tx - sensor->getOffX())>-20.0 && (tx - sensor->getOffX())<0.0
+      	 && (ty - sensor->getOffY())>-60.0 && (ty - sensor->getOffY())<-40.0){
 	//std::cout << "     HIT sensor: " << dutEvent->getFrameNumber() << " "
 	//	    << dutEvent->getTimeStamp()
 	//	    << " " << cluster->getValue() << std::endl;
 	  isInsideHit=true;
       }
+
+      //if((tx - sensor->getOffX())>220.0 && (tx - sensor->getOffX())<2000.0
+      // && (ty - sensor->getOffY())>-4000.0 && (ty - sensor->getOffY())<4000.0){
+	//std::cout << "     OUTSIDE HIT sensor: " << dutEvent->getFrameNumber() << " "
+	//<< dutEvent->getTimeStamp()
+	//<< " " << cluster->getValue() << std::endl;
+      // } 
       
 	_trackResT0.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY(), cluster->getT0());
 	_trackResCharge.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY(), cluster->getValue());
@@ -169,11 +177,11 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 
       // Print missing hits
       if(!isInsideHit){
-	if((tx - sensor->getOffX())>-150.0 && (tx - sensor->getOffX())<-130.0
-	   && (ty - sensor->getOffY())>-40.0 && (ty - sensor->getOffY())<20.0){
+	if((tx - sensor->getOffX())>-20.0 && (tx - sensor->getOffX())<0.0
+	   && (ty - sensor->getOffY())>-60.0 && (ty - sensor->getOffY())<-40.0){
 	  std::cout << "inside sensor: " << dutEvent->getFrameNumber()
-		    << " " << dutEvent->getTimeStamp()
-		    << std::endl;
+	  << " " << dutEvent->getTimeStamp()
+	  << std::endl;
 	}
       }
     }

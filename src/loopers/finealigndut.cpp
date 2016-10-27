@@ -56,10 +56,20 @@ void FineAlignDut::loop()
 	// Makes or gets a directory called from inside _dir with this name
 	name.str("");
 	name << "_perm" << niter; 	
-	
+
+	float ndiv = 10000.0;
+	int n_residuals = int(float(_endEvent-_startEvent)/ndiv)+1;
+	std::vector<Analyzers::DUTResiduals> v_residual;
+	std::vector<long unsigned> v_timeStamp;
 	// Residuals of DUT clusters to ref. tracks
 	Analyzers::DUTResiduals residuals(_refDevice, _dutDevice, (rot>0) ? 0 : _dir, name.str().c_str(), numPixX, binxPerPix, _numBinsY);
-	
+
+	for(unsigned i=0; i<n_residuals; ++i){
+	  Analyzers::DUTResiduals one_residual(_refDevice, _dutDevice, (rot>0) ? 0 : _dir, name.str().c_str(), numPixX, 10, _numBinsY);
+	  v_residual.push_back(one_residual);
+	  long unsigned s=0;
+	  v_timeStamp.push_back(s);
+	}
 	// Use events with only 1 track
 	Analyzers::Cuts::EventTracks* cut1 =
 	  new Analyzers::Cuts::EventTracks(1, Analyzers::EventCut::EQ);
@@ -77,11 +87,16 @@ void FineAlignDut::loop()
 	residuals.addCut(cut1);
 	residuals.addCut(cut2);
 
+	for(unsigned i=0; i<n_residuals; ++i){
+	  v_residual.at(i).addCut(cut1);
+	  v_residual.at(i).addCut(cut2);
+	}
+	
 	for (ULong64_t nevent = _startEvent; nevent <= _endEvent; nevent++)
 	  {
 	    Storage::Event* refEvent = _refStorage->readEvent(nevent);
 	    Storage::Event* dutEvent = _dutStorage->readEvent(nevent);
-	    
+
 	    if (refEvent->getNumClusters() || dutEvent->getNumClusters())
 	      throw "FineAlignDut: can't recluster an event, mask the tree in the input";
 	    for (unsigned int nplane = 0; nplane < refEvent->getNumPlanes(); nplane++)
@@ -99,18 +114,34 @@ void FineAlignDut::loop()
 					_refDevice->getBeamSlopeY());
 	    
 	    residuals.processEvent(refEvent, dutEvent);
-
+	    int this_residual = int(float(nevent-_startEvent)/ndiv);
+	    v_residual.at(this_residual).processEvent(refEvent, dutEvent);
+	    v_timeStamp.at(this_residual) += (refEvent->getTimeStamp()/ndiv);
+	    
 	    progressBar(nevent);
 
 	    delete refEvent;
 	    delete dutEvent;
 	  }
 
+	std::vector<TH1D*> x_hists,y_hists;
 	for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); nsens++)
 	  {
 	    Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);
+
+	    // list the X and Y residual per frameNumber
+	    for(unsigned i=0; i<n_residuals; ++i){
+	      std::cout << "X int: " << i << " "  << v_residual.at(i).getResidualX(nsens)->GetMean() << " " << (v_timeStamp.at(i)/1.0e6) << std::endl;
+	      std::cout << "Y int: " << i << " "  << v_residual.at(i).getResidualY(nsens)->GetMean()  << " " << (v_timeStamp.at(i)/1.0e6) << std::endl;
+	      x_hists.push_back(v_residual.at(i).getResidualX(nsens));
+	      y_hists.push_back(v_residual.at(i).getResidualY(nsens));	      
+	    }
+	    Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits);
+	    Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits);
+				    
 	    
 	    double offsetX = 0, offsetY = 0, rotation = 0;
+	    /*
 	    if(rot==0){
 	      Processors::residualAlignment(residuals.getResidualXY(nsens),
 					    residuals.getResidualYX(nsens),
@@ -141,11 +172,10 @@ void FineAlignDut::loop()
 	      //un-do the rotations
 	      sensor->setRotZ(sensor->getRotZ() - my_rotation);
 	    }
-	    
+	    */
 	  } // end loop over sensors
-
       } // end loop over rotations
-
+      /*
       for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); nsens++){
 	Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);
 	// find the minimum of residuals
@@ -166,7 +196,9 @@ void FineAlignDut::loop()
 	  sensor->setRotZ(sensor->getRotZ() + (0.1 * (6.0 - double(iter_rot_residuals+1)) / (1.0+double(niter)*3.0)));
 	}
       } // end loop over sensors for rotations
+      */
   }// end loop over iterations
+  //std::cout << "_dutDevice->getAlignment(): " << _dutDevice->getAlignment() << std::endl;
   _dutDevice->getAlignment()->writeFile();
 }
 
@@ -194,7 +226,7 @@ FineAlignDut::FineAlignDut(Mechanics::Device* refDevice,
   _dutDevice(dutDevice),
   _clusterMaker(clusterMaker),
   _trackMaker(trackMaker),
-  _numIterations(5),
+  _numIterations(1),
   _numBinsY(15),
   _numPixX(5),
   _binsPerPix(10),

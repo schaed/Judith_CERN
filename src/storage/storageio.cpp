@@ -121,8 +121,15 @@ Event* StorageIO::readEvent(Long64_t n)
       //				       << " " <<  hitTiming[nhit] << std::endl;      
       //if (nhit<4.5) continue;
       if(numHits>10 && _numPlanes==1){
-	if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.003 && hitT0[nhit]>80.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.5 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.6)) continue;
-	else if(nhit>3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>50.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.05)) continue;
+	if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>25.0 && hitT0[nhit]<230.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<250.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]>1.9)){ continue; }
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.01 && hitT0[nhit]>50.0 && hitT0[nhit]<110.0 && hitTiming[nhit]>0.3 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>1.2)){ continue; }
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.01 && hitT0[nhit]>50.0 && hitT0[nhit]<110.0 && hitTiming[nhit]>0.3 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>0.2)){ continue; }		
+	else if(nhit>3.5) continue;
+	//else if(nhit>3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>100.0 && hitT0[nhit]<150.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>0.05)) continue;
+
+	//bool requireAmpHit=false;
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && (hitValue[nhit]>0.003 && hitT0[nhit]>80.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.5 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.6))requireAmpHit=true;
+	//if(!requireAmpHit) continue;
       }
       //if(_numPlanes==1) std::cout << "   pass " << nhit << " charge: " << hitValue[nhit] << " " <<  hitLowFreqFFT[nhit]
       //		  << " " << hitT0[nhit] << " " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
@@ -140,6 +147,7 @@ Event* StorageIO::readEvent(Long64_t n)
       if(bHitChi2) hit->setChi2(hitChi2[nhit]);
       if(bHitIsHit) hit->setIsHit(int(hitIsHit[nhit])); 
       if(bHitValidFit) hit->setValidFit(int(hitValidFit[nhit]));
+      //hit->setValidFit(int(1));
       if(bHitLowFreqFFT) hit->setLowFreqFFT(hitLowFreqFFT[nhit]);
       if(bHitLowFreqFFTPhase) hit->setLowFreqFFTPhase(hitLowFreqFFTPhase[nhit]);
 

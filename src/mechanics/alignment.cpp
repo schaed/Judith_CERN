@@ -60,6 +60,8 @@ void Alignment::writeFile()
     file << "rotation x : " << sensor->getRotX() << endl;
     file << "rotation y : " << sensor->getRotY() << endl;
     file << "rotation z : " << sensor->getRotZ() << endl;
+    file << "frameNumberFunc x : " << sensor->getRotZ() << endl;
+    file << "frameNumberFunc y : " << sensor->getRotZ() << endl;
     file << "[End Sensor]\n" << endl;
   }
 
@@ -118,6 +120,10 @@ void Alignment::readFile()
         sensor->setRotY(value);
       else if (!row->key.compare("rotation z"))
         sensor->setRotZ(value);
+      else if (!row->key.compare("frameNumberFunc x"))
+        sensor->setFrameNumberFuncX(row->value);
+      else if (!row->key.compare("frameNumberFunc y"))
+        sensor->setFrameNumberFuncY(row->value);
       else
         throw "Alignment: can't parse config row";
     }

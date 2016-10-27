@@ -94,6 +94,46 @@ void fitGaussian(
   fitGaussian(hist, mean, sigma, max, background, display);
 }
 
+  void fitPosition(std::vector<TH1D*> hist,
+		   unsigned nevt_per_point,
+		   bool display)
+{
+  const float my_bins = 1.0+float(hist.size());
+  TH1D* hpos = new TH1D("pos","pos",int(my_bins),0.0,nevt_per_point*my_bins);
+
+  for(unsigned i=0; i<hist.size(); ++i){
+
+    hpos->SetBinContent(i+1,hist.at(i)->GetMean());
+    hpos->SetBinError(i+1,hist.at(i)->GetMeanError());
+    /*
+    double mean,sigma;
+    fitBox(hist.at(i),
+	   mean,
+	   sigma,
+	   100.0,false);
+
+    hpos->SetBinContent(i+1,mean);
+    hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
+    */
+    
+  }
+  
+  if (display)
+  {
+    hpos->GetXaxis()->SetTitle("Frame Number");
+    hpos->GetYaxis()->SetTitle("Position in #mu m");
+    TCanvas* can = new TCanvas();
+    hpos->SetLineColor(46);
+    hpos->SetLineWidth(1);
+    hpos->Fit("pol1");
+    hpos->Draw();
+    can->Update();
+    can->WaitPrimitive();
+  }
+
+  delete hpos;
+}
+
 void fitGaussian(
     TH1D* hist,
     double& mean,
@@ -238,7 +278,6 @@ void fitBox(
   //fit a gaussian for first approximation
   fitGaussian(hist, mean, sigma, max, background, display);
 
-
   //first order approximations
   // double maxBin = hist->GetMaximumBin();
   double rise = mean - sensorWidth/2;
@@ -252,7 +291,6 @@ void fitBox(
   // double maxHeight = 40;
   // double riseSlope = 400;
   // double fallSlope = 400;
-
 
   errorfunc->SetParameter("Height",height);
   errorfunc->SetParameter("Rise",rise);
@@ -556,7 +594,7 @@ void residualAlignment(TH2D* residualX, TH2D* residualY, double& offsetX,
   offsetY *= relaxation;
 }
 
-void applyAlignment(Storage::Event* event, const Mechanics::Device* device)
+  void applyAlignment(Storage::Event* event, const Mechanics::Device* device, bool applySlope)
 {
   assert(event && device && "Processors: can't apply alignmet with null event and/or device");
   assert(event->getNumPlanes() == device->getNumSensors() &&

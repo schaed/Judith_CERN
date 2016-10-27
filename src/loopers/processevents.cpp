@@ -48,7 +48,12 @@ void ProcessEvents::loop()
       throw "ProcessEvents: can't recluster an event, mask the tree in the input";
     for (unsigned int nplane = 0; nplane < refEvent->getNumPlanes(); nplane++)
       if (_clusterMaker) _clusterMaker->generateClusters(refEvent, nplane);
-
+    
+    for(unsigned nSens=0; nSens<_refDevice->getNumSensors(); ++nSens){
+      _refDevice->getSensor(nSens)->setFrameNumber(refEvent->getFrameNumber());
+      //std::cout << "ONE: " << _refDevice->getSensor(nSens)->getOffY() << std::endl;
+    }
+    
     Processors::applyAlignment(refEvent, _refDevice);
 
     if (refEvent->getNumTracks())

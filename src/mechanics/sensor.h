@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include "TF1.h"
 
 namespace Mechanics {
 
@@ -17,6 +18,7 @@ private:
   const double _pitchY;
   const double _depth;
   const Device* _device;
+  long unsigned _frameNumber;  
   std::string _name;
   const double _xox0;
   double _offX;
@@ -59,6 +61,17 @@ public:
   void setRotX(double rotation);
   void setRotY(double rotation);
   void setRotZ(double rotation);
+  void setFrameNumberFuncX(std::string a) {
+    m_frameFuncX = a;
+    f_frameFuncX = new TF1("xpos",m_frameFuncX.c_str());
+  }
+  void setFrameNumberFuncY(std::string a) {
+    m_frameFuncY = a;
+    f_frameFuncY = new TF1("ypos",m_frameFuncY.c_str());
+  }
+
+  void setFrameNumber(long unsigned frameNumber){_frameNumber = frameNumber;} 
+    
 
   void rotateToGlobal(double& x, double& y, double& z) const;
   void rotateToSensor(double& x, double& y, double& z) const;
@@ -91,10 +104,17 @@ public:
   double getSensitiveY() const;
   double getPosSensitiveX() const;
   double getPosSensitiveY() const;
+
+  std::string getFrameNumberFuncX() const { return m_frameFuncX; }
+  std::string getFrameNumberFuncY() const { return m_frameFuncY; }
+  
   const Device* getDevice() const;
   //const char* getName() const;
   const std::string getName() const;  
-
+  std::string m_frameFuncX;
+  std::string m_frameFuncY;
+  TF1* f_frameFuncX;
+  TF1* f_frameFuncY;
   static bool sort(const Sensor* s1, const Sensor* s2);
 };
 

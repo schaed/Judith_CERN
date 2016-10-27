@@ -18,6 +18,9 @@ namespace Processors {
 
 TF1* fitPixelBeam(TH1D* hist, double pixWidth, double beamSigma, bool display = false);
 
+ void fitPosition(std::vector<TH1D*> hist,
+		  unsigned nevt_per_point,
+		  bool display);
 void fitGaussian(
     TH1D* hist,
     double& mean,
@@ -52,7 +55,7 @@ void residualAlignment(TH2D* residualX, TH2D* residualY, double& offsetX,
                        double& offsetY, double& rotation,
                        double relaxation = 0.8, bool display = false);
 
-void applyAlignment(Storage::Event* event, const Mechanics::Device* device);
+void applyAlignment(Storage::Event* event, const Mechanics::Device* device, bool applySlope=false);
 
 void pixelToSlope(const Mechanics::Device* device, double &slopeX, double &slopeY);
 
