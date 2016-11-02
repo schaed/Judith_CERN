@@ -53,7 +53,8 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
   //fill in the amplitude distribution histogram
   for (unsigned int nsensor = 0; nsensor < _dutDevice->getNumSensors(); nsensor++)
   {
-    _dutDevice->getSensor(nsensor)->setFrameNumber(refEvent->getFrameNumber());
+    //std::cout << "F: " << dutEvent->getFrameNumber() << std::endl;
+    _dutDevice->getSensor(nsensor)->setFrameNumber(dutEvent->getFrameNumber());
     for (unsigned int nhit = 0; nhit < dutEvent->getNumHits(); nhit++)
     {
       const Storage::Hit* hit = dutEvent->getHit(nhit);
@@ -111,7 +112,8 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
       //_trackRes.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
       //_trackResFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());      
       _trackRes.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
-      _trackResFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());      
+      _trackResFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
+      fout << dutEvent->getFrameNumber() << "," << (tx - sensor->getOffX()) << "," << (ty - sensor->getOffY()) << "\n";
        //-50 to -30 x and 110 to 130 y
       //-60 to -40 y and -40 to -60 x
       //if((tx - sensor->getOffX())>-50.0 && (tx - sensor->getOffX())<-30.0
@@ -147,8 +149,9 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 	//_trackResHitFine.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY());	
 	_trackResHit.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
 	_trackResHitFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());	
-      if((tx - sensor->getOffX())>-20.0 && (tx - sensor->getOffX())<0.0
-      	 && (ty - sensor->getOffY())>-60.0 && (ty - sensor->getOffY())<-40.0){
+      if((tx - sensor->getOffX())>-100.0 && (tx - sensor->getOffX())<-70.0
+	  && (ty - sensor->getOffY())>-20.0 && (ty - sensor->getOffY())<10.0){
+	// && (ty - sensor->getOffY())>130.0 && (ty - sensor->getOffY())<200.0){
 	//std::cout << "     HIT sensor: " << dutEvent->getFrameNumber() << " "
 	//	    << dutEvent->getTimeStamp()
 	//	    << " " << cluster->getValue() << std::endl;
@@ -161,13 +164,21 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 	//<< dutEvent->getTimeStamp()
 	//<< " " << cluster->getValue() << std::endl;
       // } 
-      
-	_trackResT0.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY(), cluster->getT0());
-	_trackResCharge.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY(), cluster->getValue());
-	_trackResCharge3D.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY(), cluster->getValue());
-	_trackResTime.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY(), cluster->getTiming());
-	_hitTimeVsCharge.at(nsensor)->Fill(cluster->getValue(), cluster->getTiming());
-	_hitT0.at(nsensor)->Fill(cluster->getT0());
+
+      //std::cout << "cluster->getNumHits(): " << cluster->getNumHits() <<std::endl;
+      _trackResT0.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY(), cluster->getT0());
+      _trackResClusterSize.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY(), float(cluster->getNumHits()));
+      _trackResCharge.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY(), cluster->getValue());
+      _trackResCharge3D.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY(), cluster->getValue());
+      for(unsigned mm=0; mm<cluster->getNumHits(); ++mm){
+	
+	_trackResTime.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY(), cluster->getHit(mm)->getTiming()); // timing is the first hit. the biggest
+	if((tx - sensor->getOffX())>-100.0 && (tx - sensor->getOffX())<-70.0
+	   && (ty - sensor->getOffY())>-70.0 && (ty - sensor->getOffY())<70.0){
+	  _hitTimeVsCharge.at(nsensor)->Fill(cluster->getHit(mm)->getValue(), cluster->getTiming());
+	}
+	_hitT0.at(nsensor)->Fill(cluster->getHit(mm)->getT0());
+      }
 	//_hitCharge.at(nsensor)->Fill(cluster->getCharge());	
       // hit residual 1 D
       //_hitResidualCut.at(nsensor)->Fill(sqrt((tx - cluster->getPosX())*(tx - cluster->getPosX()) + (ty - cluster->getPosY())*(ty - cluster->getPosY())));
@@ -177,13 +188,18 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 
       // Print missing hits
       if(!isInsideHit){
-	if((tx - sensor->getOffX())>-20.0 && (tx - sensor->getOffX())<0.0
-	   && (ty - sensor->getOffY())>-60.0 && (ty - sensor->getOffY())<-40.0){
+	if((tx - sensor->getOffX())>-100.0 && (tx - sensor->getOffX())<-70.0
+	   && (ty - sensor->getOffY())>-20.0 && (ty - sensor->getOffY())<10.0){
 	  std::cout << "inside sensor: " << dutEvent->getFrameNumber()
 	  << " " << dutEvent->getTimeStamp()
 	  << std::endl;
 	}
       }
+
+      if((tx - sensor->getOffX())>105.0 && (tx - sensor->getOffX())<115.0
+	 && (ty - sensor->getOffY())>-15.0 && (ty - sensor->getOffY())<-5.0)
+	hhit->processEvent(dutEvent);
+      
     }
   }// end track loop
   
@@ -192,7 +208,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
     
     // draw the clusters
     hcluster->processEvent(dutEvent);
-    hhit->processEvent(dutEvent);
+    //hhit->processEvent(dutEvent);
           
     for (unsigned int nplane = 0; nplane < dutEvent->getNumPlanes(); nplane++){
       Storage::Plane* plane = dutEvent->getPlane(nplane);	  
@@ -357,7 +373,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 void Efficiency::postProcessing()
 {
   if (_postProcessed) return;
-
+  fout.close();
   for (unsigned int nsensor = 0; nsensor < _dutDevice->getNumSensors(); nsensor++)
   {
     //divide accumulated amplitude histogram with
@@ -465,7 +481,8 @@ void Efficiency::postProcessing()
 	if (entries>0.0){
 	  _trackResCharge.at(nplane)->SetBinContent(i,j, _trackResCharge.at(nplane)->GetBinContent(i,j)/entries);
 	  _trackResTime.at(nplane)->SetBinContent(i,j, _trackResTime.at(nplane)->GetBinContent(i,j)/entries);
-	  _trackResT0.at(nplane)->SetBinContent(i,j, _trackResT0.at(nplane)->GetBinContent(i,j)/entries);	  	  
+	  _trackResT0.at(nplane)->SetBinContent(i,j, _trackResT0.at(nplane)->GetBinContent(i,j)/entries);
+	  _trackResClusterSize.at(nplane)->SetBinContent(i,j, _trackResClusterSize.at(nplane)->GetBinContent(i,j)/entries);	  	  	  
 	}
       }
     }
@@ -521,7 +538,6 @@ void Efficiency::postProcessing()
 
     hcluster->postProcessing();
     hhit->postProcessing();
-    
   }
   
 Efficiency::Efficiency(const Mechanics::Device* refDevice,
@@ -542,7 +558,7 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
 
   // Makes or gets a directory called from inside _dir with this name
   TDirectory* plotDir = makeGetDirectory("Efficiency");
-
+  fout.open("forEnrico.txt"); 
   // initialize the Tdirectory
   hcluster = new ClusterInfo(dutDevice,plotDir,"DUT",16,5);
   hhit = new HitInfo(dutDevice,plotDir,"DUT",16,5);
@@ -718,8 +734,8 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* trackOcc = new TH2D(name.str().c_str(), title.str().c_str(),
-			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX(),
-			      4*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());
+			      4*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
+			      4*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());
 
     trackOcc->SetDirectory(plotDir);
     _trackOcc.push_back(trackOcc);
@@ -735,8 +751,8 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* trackResCharge = new TH2D(name.str().c_str(), title.str().c_str(),
-				    2*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX(),
-				    2*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());
+				    20*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
+				    20*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());
 
     trackResCharge->SetDirectory(plotDir);
     _trackResCharge.push_back(trackResCharge);
@@ -771,11 +787,27 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* trackResT0 = new TH2D(name.str().c_str(), title.str().c_str(),
-			      2*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX(),
-			      2*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());
+			      20*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
+			      20*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());
 
     trackResT0->SetDirectory(plotDir);
-    _trackResT0.push_back(trackResT0);    
+    _trackResT0.push_back(trackResT0);
+
+    // Average clustersize 
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "DUTClusterSize" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Cluster Size "
+          << ";X position [" << _dutDevice->getSpaceUnit() << "]"
+          << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
+          << ";Tracks";
+    TH2D* trackResClusterSize = new TH2D(name.str().c_str(), title.str().c_str(),
+			      20*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
+			      20*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());
+
+    trackResClusterSize->SetDirectory(plotDir);
+    _trackResClusterSize.push_back(trackResClusterSize);     
 
     // Average time to collect charge
     name.str(""); title.str("");
@@ -787,8 +819,8 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* trackResTime = new TH2D(name.str().c_str(), title.str().c_str(),
-			      2*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX(),
-			      2*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());
+			      20*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
+			      20*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());
 
     trackResTime->SetDirectory(plotDir);
     _trackResTime.push_back(trackResTime);
@@ -853,8 +885,8 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     /*    TH2D* trackResFine = new TH2D(name.str().c_str(), title.str().c_str(),
-			      5*4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX(),
-			      5*4*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());*/
+			      5*4*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
+			      5*4*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());*/
    
     TH2D* trackResFine = new TH2D(name.str().c_str(), title.str().c_str(),
 			      800, -400.0, 400.0,
@@ -873,8 +905,8 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     /*TH2D* trackResHitFine = new TH2D(name.str().c_str(), title.str().c_str(),
-			      5*4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX(),
-			      5*4*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());*/
+			      5*4*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
+			      5*4*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());*/
     TH2D* trackResHitFine = new TH2D(name.str().c_str(), title.str().c_str(),
 			      800, -400.0, 400.0,
 			      800, -400.0, 400.0);    

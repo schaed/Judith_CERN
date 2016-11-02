@@ -125,7 +125,7 @@ void fitGaussian(
     TCanvas* can = new TCanvas();
     hpos->SetLineColor(46);
     hpos->SetLineWidth(1);
-    hpos->Fit("pol1");
+    hpos->Fit("pol3");
     hpos->Draw();
     can->Update();
     can->WaitPrimitive();

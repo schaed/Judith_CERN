@@ -8,6 +8,8 @@
 #include <TH1D.h>
 #include <TEfficiency.h>
 #include <TDirectory.h>
+#include <fstream>
+#include <iostream>
 
 #include "dualanalyzer.h"
 #include "hitinfo.h"
@@ -52,6 +54,7 @@ private:
   //std::vector<TH1D*> _hitFFTPhs;  
   
   std::vector<TH2D*> _trackResT0;
+  std::vector<TH2D*> _trackResClusterSize;  
   std::vector<TH2D*> _trackResCharge;  
   std::vector<TH2D*> _trackResTime;  
   std::vector<TH2D*> _hitTimeVsCharge;    
@@ -62,7 +65,7 @@ private:
   std::vector<TH1D*> _amplDist;
   std::vector<TH1D*> _amplDistCuts;
   std::vector<TH1D*> _amplDistCommon;
-
+  std::ofstream fout;
   // plot the clusters and hits
   ClusterInfo *hcluster;
   HitInfo *hhit;
