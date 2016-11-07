@@ -98,6 +98,9 @@ void fitGaussian(
 		   unsigned nevt_per_point,
 		   bool display)
 {
+  TCanvas* can = new TCanvas();
+  hist.at(0)->Draw();
+  unsigned color=0;
   const float my_bins = 1.0+float(hist.size());
   TH1D* hpos = new TH1D("pos","pos",int(my_bins),0.0,nevt_per_point*my_bins);
 
@@ -115,9 +118,13 @@ void fitGaussian(
     hpos->SetBinContent(i+1,mean);
     hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
     */
-    
+    color+=1;
+    hist.at(i)->SetLineColor(color);
+    hist.at(i)->Draw("same");
+
   }
-  
+    can->Update();
+    can->WaitPrimitive();  
   if (display)
   {
     hpos->GetXaxis()->SetTitle("Frame Number");
