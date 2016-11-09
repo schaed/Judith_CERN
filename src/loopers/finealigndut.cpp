@@ -60,16 +60,20 @@ void FineAlignDut::loop()
 	float ndiv = 10000.0;
 	int n_residuals = int(float(_endEvent-_startEvent)/ndiv)+1;
 	std::vector<Analyzers::DUTResiduals> v_residual;
-	std::vector<long unsigned> v_timeStamp;
+	std::vector<double> v_timeStamp;
 	// Residuals of DUT clusters to ref. tracks
 	Analyzers::DUTResiduals residuals(_refDevice, _dutDevice, (rot>0) ? 0 : _dir, name.str().c_str(), numPixX, binxPerPix, _numBinsY);
 
 	for(unsigned i=0; i<n_residuals; ++i){
 	  Analyzers::DUTResiduals one_residual(_refDevice, _dutDevice, (rot>0) ? 0 : _dir, name.str().c_str(), numPixX, 10, _numBinsY);
 	  v_residual.push_back(one_residual);
-	  long unsigned s=0;
-	  v_timeStamp.push_back(s);
+	  //long unsigned s=0_dutDevice->getTimeStart();
+	  v_timeStamp.push_back(0.0);
 	}
+
+	// determine binning versus time stamp.
+	// fill in here
+	
 	// Use events with only 1 track
 	Analyzers::Cuts::EventTracks* cut1 =
 	  new Analyzers::Cuts::EventTracks(1, Analyzers::EventCut::EQ);
@@ -91,7 +95,7 @@ void FineAlignDut::loop()
 	  v_residual.at(i).addCut(cut1);
 	  v_residual.at(i).addCut(cut2);
 	}
-	
+	unsigned last_res=0,my_evt_res=0;
 	for (ULong64_t nevent = _startEvent; nevent <= _endEvent; nevent++)
 	  {
 	    Storage::Event* refEvent = _refStorage->readEvent(nevent);
@@ -116,13 +120,22 @@ void FineAlignDut::loop()
 	    residuals.processEvent(refEvent, dutEvent);
 	    int this_residual = int(float(nevent-_startEvent)/ndiv);
 	    v_residual.at(this_residual).processEvent(refEvent, dutEvent);
-	    v_timeStamp.at(this_residual) += (refEvent->getTimeStamp()/ndiv);
+	    v_timeStamp.at(this_residual) += double(refEvent->getTimeStamp()/1.0e8/double(ndiv));
+	    ++my_evt_res;
+	    if(this_residual!=last_res){
+	      my_evt_res=0;
+	      last_res=this_residual;
+	    }
 	    
 	    progressBar(nevent);
 
 	    delete refEvent;
 	    delete dutEvent;
 	  }
+	int end_residual = int(float(_endEvent-1-_startEvent)/ndiv);
+	if(my_evt_res<ndiv){
+	  v_timeStamp.at(end_residual)*=double(ndiv)/double(my_evt_res);
+	}
 
 	std::vector<TH1D*> x_hists,y_hists;
 	for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); nsens++)
@@ -138,7 +151,11 @@ void FineAlignDut::loop()
 	    }
 	    Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits);
 	    Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits);
-				    
+
+	    // versus time stamp
+	    Processors::fitPosition(x_hists,v_timeStamp,_displayFits);
+	    Processors::fitPosition(y_hists,v_timeStamp,_displayFits);
+	    
 	    
 	    double offsetX = 0, offsetY = 0, rotation = 0;
 	    /*

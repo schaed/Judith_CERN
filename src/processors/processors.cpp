@@ -118,7 +118,16 @@ void fitGaussian(
     hpos->SetBinContent(i+1,mean);
     hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
     */
+
+    
+      double mean=0,sigma=0,max=0,bkg=0;
+      fitGaussian(hist.at(i),mean,sigma,max,bkg,false);
+      hpos->SetBinContent(i+1,mean);
+      hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
+
+     
     color+=1;
+    if(color>5) continue;
     hist.at(i)->SetLineColor(color);
     hist.at(i)->Draw("same");
 
@@ -140,6 +149,76 @@ void fitGaussian(
 
   delete hpos;
 }
+
+  void fitPosition(std::vector<TH1D*> hist,
+		   std::vector<double> timing_pos,
+		   bool display)
+{
+  TCanvas* can = new TCanvas();
+  hist.at(0)->Draw();
+  unsigned color=0;
+  const float my_bins = 1.0+float(hist.size());
+  //double *bins = &timing_pos[0];
+  double bins[1000];
+  for(unsigned a=0; a< timing_pos.size(); ++a){
+    bins[a]=timing_pos.at(a);
+    //std::cout << "time: " << timing_pos.at(a) << std::endl;
+  }
+  for(unsigned a=timing_pos.size(); a< 1000; ++a){
+    bins[a]=double(a)+bins[timing_pos.size()-1];
+    //std::cout << "a: " <<  a << " " << bins[a] << std::endl;
+  }
+  //Double_t bins[] = { 50, 55, 60, 65, 72, 80, 90, 100, 120, 160 };
+  Int_t  binnum = timing_pos.size(); // or just = 9
+  TH1D* hpos = new TH1D("pos","pos", my_bins-2, bins);
+  //std::cout << "binnum: " << binnum << " " << my_bins << std::endl;
+  //TH1D* hpos = new TH1D("pos","pos",int(my_bins),0.0,nevt_per_point*my_bins);
+
+  for(unsigned i=0; i<hist.size(); ++i){
+
+    hpos->SetBinContent(i+1,hist.at(i)->GetMean());
+    hpos->SetBinError(i+1,hist.at(i)->GetMeanError());
+    /*
+    double mean,sigma;
+    fitBox(hist.at(i),
+	   mean,
+	   sigma,
+	   100.0,false);
+
+    hpos->SetBinContent(i+1,mean);
+    hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
+    */
+      double mean=0,sigma=0,max=0,bkg=0;
+      fitGaussian(hist.at(i),mean,sigma,max,bkg,false);
+      hpos->SetBinContent(i+1,mean);
+      hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
+
+    
+    color+=1;
+    if(color>5) continue;
+    hist.at(i)->SetLineColor(color);
+    hist.at(i)->Draw("same");
+
+  }
+    can->Update();
+    can->WaitPrimitive();  
+  if (display)
+  {
+    hpos->GetXaxis()->SetTitle("Time Stamp");
+    hpos->GetYaxis()->SetTitle("Position in #mu m");
+    TCanvas* can = new TCanvas();
+    hpos->SetLineColor(1);
+    hpos->SetLineWidth(1);
+    hpos->Fit("pol3");
+    hpos->Draw();
+    can->Update();
+    can->WaitPrimitive();
+    delete can;
+  }
+
+  delete hpos;
+}
+  
 
 void fitGaussian(
     TH1D* hist,

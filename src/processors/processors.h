@@ -21,6 +21,9 @@ TF1* fitPixelBeam(TH1D* hist, double pixWidth, double beamSigma, bool display = 
  void fitPosition(std::vector<TH1D*> hist,
 		  unsigned nevt_per_point,
 		  bool display);
+ void fitPosition(std::vector<TH1D*> hist,
+		  std::vector<double> timing_pos,
+		  bool display);
 void fitGaussian(
     TH1D* hist,
     double& mean,
