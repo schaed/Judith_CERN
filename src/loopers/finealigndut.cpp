@@ -42,7 +42,8 @@ void FineAlignDut::loop()
     std::stringstream name; // Build name strings for each histo
       double my_rotation=0.0;
       std::vector<std::vector<double> > rot_residuals;
-      for(unsigned rot=0; rot<12; ++rot){
+      for(unsigned rot=0; rot<1; ++rot){
+	std::cout << "rot: " << rot << std::endl;
 
 	// setting up the rotations
 	if(rot>0){
@@ -52,11 +53,10 @@ void FineAlignDut::loop()
 	    tmp_sensor->setRotZ(tmp_sensor->getRotZ() + my_rotation);
 	  }
 	}
-
 	// Makes or gets a directory called from inside _dir with this name
 	name.str("");
 	name << "_perm" << niter; 	
-
+	
 	float ndiv = 10000.0;
 	int n_residuals = int(float(_endEvent-_startEvent)/ndiv)+1;
 	std::vector<Analyzers::DUTResiduals> v_residual;
@@ -70,7 +70,7 @@ void FineAlignDut::loop()
 	  //long unsigned s=0_dutDevice->getTimeStart();
 	  v_timeStamp.push_back(0.0);
 	}
-
+	
 	// determine binning versus time stamp.
 	// fill in here
 	
@@ -92,9 +92,20 @@ void FineAlignDut::loop()
 	residuals.addCut(cut2);
 
 	for(unsigned i=0; i<n_residuals; ++i){
-	  v_residual.at(i).addCut(cut1);
-	  v_residual.at(i).addCut(cut2);
+
+	  // Use events with only 1 track
+	  Analyzers::Cuts::EventTracks* cut1b =
+	    new Analyzers::Cuts::EventTracks(1, Analyzers::EventCut::EQ);
+
+	  // Use tracks with one hit in each plane
+	  //const unsigned int numClusters = _refDevice->getNumSensors();
+	  Analyzers::Cuts::TrackClusters* cut2b =
+	    new Analyzers::Cuts::TrackClusters(numClusters, Analyzers::TrackCut::EQ);
+	  
+	  v_residual.at(i).addCut(cut1b);
+	  v_residual.at(i).addCut(cut2b);
 	}
+	
 	unsigned last_res=0,my_evt_res=0;
 	for (ULong64_t nevent = _startEvent; nevent <= _endEvent; nevent++)
 	  {
@@ -136,10 +147,11 @@ void FineAlignDut::loop()
 	if(my_evt_res<ndiv){
 	  v_timeStamp.at(end_residual)*=double(ndiv)/double(my_evt_res);
 	}
-
+	
 	std::vector<TH1D*> x_hists,y_hists;
-	for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); nsens++)
+	for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); ++nsens)
 	  {
+	    std::cout << "sensors: " << nsens << " out of " << _dutDevice->getNumSensors() << std::endl;
 	    Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);
 
 	    // list the X and Y residual per frameNumber
@@ -149,15 +161,29 @@ void FineAlignDut::loop()
 	      x_hists.push_back(v_residual.at(i).getResidualX(nsens));
 	      y_hists.push_back(v_residual.at(i).getResidualY(nsens));	      
 	    }
-	    Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits);
-	    Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits);
+	    bool DOFRAMENUMBER=true;
+	    
+	    std::string funx = Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits);
+	    if(DOFRAMENUMBER) sensor->setFrameNumberFuncX(funx);
+	    std::string funy = Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits);
+	    if(DOFRAMENUMBER) sensor->setFrameNumberFuncY(funy);	    
+	    
 
 	    // versus time stamp
-	    Processors::fitPosition(x_hists,v_timeStamp,_displayFits);
-	    Processors::fitPosition(y_hists,v_timeStamp,_displayFits);
+	    std::string tfunx = Processors::fitPosition(x_hists,v_timeStamp,_displayFits);
+	    if(!DOFRAMENUMBER) sensor->setTimeStampFuncX(tfunx);
+	    std::string tfuny = Processors::fitPosition(y_hists,v_timeStamp,_displayFits);
+	    if(!DOFRAMENUMBER) sensor->setTimeStampFuncY(tfunx);
 	    
-	    
-	    double offsetX = 0, offsetY = 0, rotation = 0;
+	    for(unsigned it=0;it<x_hists.size(); ++it){
+	      delete x_hists.at(it);
+	      delete y_hists.at(it);
+	      
+	    }
+	    x_hists.clear();
+	    y_hists.clear();
+	    //std::cout << "end fit pos " << std::endl;
+	    //double offsetX = 0, offsetY = 0, rotation = 0;
 	    /*
 	    if(rot==0){
 	      Processors::residualAlignment(residuals.getResidualXY(nsens),
@@ -190,8 +216,12 @@ void FineAlignDut::loop()
 	      sensor->setRotZ(sensor->getRotZ() - my_rotation);
 	    }
 	    */
+	    
 	  } // end loop over sensors
+	//std::cout << "end SENSOR loop: " << rot << std::endl;
       } // end loop over rotations
+      //std::cout << "end ROT loop" << std::endl;
+      //std::cout << std::flush;
       /*
       for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); nsens++){
 	Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);

@@ -18,7 +18,8 @@ private:
   const double _pitchY;
   const double _depth;
   const Device* _device;
-  long unsigned _frameNumber;  
+  long unsigned _frameNumber;
+  double _timeStamp;    
   std::string _name;
   const double _xox0;
   double _offX;
@@ -69,9 +70,17 @@ public:
     m_frameFuncY = a;
     f_frameFuncY = new TF1("ypos",m_frameFuncY.c_str());
   }
+  void setTimeStampFuncX(std::string a) {
+    m_timeStampFuncX = a;
+    f_timeStampFuncX = new TF1("xtpos",m_timeStampFuncX.c_str());
+  }
+  void setTimeStampFuncY(std::string a) {
+    m_timeStampFuncY = a;
+    f_timeStampFuncY = new TF1("ytpos",m_timeStampFuncY.c_str());
+  }
 
   void setFrameNumber(long unsigned frameNumber){_frameNumber = frameNumber;} 
-    
+  void setTimeStamp(double timeStamp){_timeStamp = timeStamp/1.0e8;} 
 
   void rotateToGlobal(double& x, double& y, double& z) const;
   void rotateToSensor(double& x, double& y, double& z) const;
@@ -107,14 +116,20 @@ public:
 
   std::string getFrameNumberFuncX() const { return m_frameFuncX; }
   std::string getFrameNumberFuncY() const { return m_frameFuncY; }
+  std::string timeStampFuncX() const { return m_timeStampFuncX; }
+  std::string timeStampFuncY() const { return m_timeStampFuncY; }
   
   const Device* getDevice() const;
   //const char* getName() const;
   const std::string getName() const;  
   std::string m_frameFuncX;
   std::string m_frameFuncY;
+  std::string m_timeStampFuncX;
+  std::string m_timeStampFuncY;
   TF1* f_frameFuncX;
   TF1* f_frameFuncY;
+  TF1* f_timeStampFuncX;
+  TF1* f_timeStampFuncY;
   static bool sort(const Sensor* s1, const Sensor* s2);
 };
 

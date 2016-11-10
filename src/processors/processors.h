@@ -18,12 +18,12 @@ namespace Processors {
 
 TF1* fitPixelBeam(TH1D* hist, double pixWidth, double beamSigma, bool display = false);
 
- void fitPosition(std::vector<TH1D*> hist,
-		  unsigned nevt_per_point,
-		  bool display);
- void fitPosition(std::vector<TH1D*> hist,
-		  std::vector<double> timing_pos,
-		  bool display);
+ std::string fitPosition(std::vector<TH1D*> hist,
+			 unsigned nevt_per_point,
+			 bool display, bool fitGaus=false);
+ std::string fitPosition(std::vector<TH1D*> hist,
+			 std::vector<double> timing_pos,
+			 bool display, bool fitGaus=false);
 void fitGaussian(
     TH1D* hist,
     double& mean,

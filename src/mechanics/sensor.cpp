@@ -259,8 +259,8 @@ double Sensor::getPitchX() const { return _pitchX; }
 double Sensor::getPitchY() const { return _pitchY; }
 double Sensor::getDepth() const { return _depth; }
 double Sensor::getXox0() const { return _xox0; }
-  double Sensor::getOffX() const { return (_offX  + (f_frameFuncX ? f_frameFuncX->Eval(double(_frameNumber )):0.0)); }
-  double Sensor::getOffY() const { return (_offY + (f_frameFuncY ? f_frameFuncY->Eval(double(_frameNumber )):0.0)); }
+  double Sensor::getOffX() const { return (_offX  + (f_frameFuncX ? f_frameFuncX->Eval(double(_frameNumber)):0.0) + (f_timeStampFuncX ? f_timeStampFuncX->Eval(_timeStamp):0.0)); }
+  double Sensor::getOffY() const { return (_offY + (f_frameFuncY ? f_frameFuncY->Eval(double(_frameNumber)):0.0) + (f_timeStampFuncY ? f_timeStampFuncY->Eval(_timeStamp):0.0)); }
 double Sensor::getOffZ() const { return _offZ; }
 double Sensor::getRotX() const { return _rotX; }
 double Sensor::getRotY() const { return _rotY; }
@@ -281,11 +281,14 @@ Sensor::Sensor(unsigned int numX, unsigned int numY, double pitchX, double pitch
                double offX, double offY, double offZ,
                double rotX, double rotY, double rotZ) :
   _numX(numX), _numY(numY), _pitchX(pitchX), _pitchY(pitchY),
-  _depth(depth), _device(device),_frameNumber(0), _name(name), _xox0(xox0),
+  _depth(depth), _device(device),_frameNumber(0),_timeStamp(0.0), _name(name), _xox0(xox0),
   _offX(offX), _offY(offY), _offZ(offZ),
   _rotX(rotX), _rotY(rotY), _rotZ(rotZ),
   _sensitiveX(pitchX * numX), _sensitiveY(pitchY * numY), _numNoisyPixels(0),
-  m_frameFuncX("0"), m_frameFuncY("0"),f_frameFuncX(0),f_frameFuncY(0)
+  m_frameFuncX("0"), m_frameFuncY("0"),
+  m_timeStampFuncX("0"), m_timeStampFuncY("0"),
+  f_timeStampFuncX(0),f_timeStampFuncY(0),
+  f_frameFuncX(0),f_frameFuncY(0)
 {
   assert(device && "Sensor: need to link the sensor back to a device.");
 

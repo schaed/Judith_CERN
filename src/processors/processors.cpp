@@ -94,9 +94,9 @@ void fitGaussian(
   fitGaussian(hist, mean, sigma, max, background, display);
 }
 
-  void fitPosition(std::vector<TH1D*> hist,
-		   unsigned nevt_per_point,
-		   bool display)
+  std::string fitPosition(std::vector<TH1D*> hist,
+			  unsigned nevt_per_point,
+			  bool display, bool fitGaus)
 {
   TCanvas* can = new TCanvas();
   hist.at(0)->Draw();
@@ -119,12 +119,12 @@ void fitGaussian(
     hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
     */
 
-    
+    if(fitGaus){
       double mean=0,sigma=0,max=0,bkg=0;
       fitGaussian(hist.at(i),mean,sigma,max,bkg,false);
       hpos->SetBinContent(i+1,mean);
       hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
-
+    }
      
     color+=1;
     if(color>5) continue;
@@ -133,7 +133,9 @@ void fitGaussian(
 
   }
     can->Update();
-    can->WaitPrimitive();  
+    can->WaitPrimitive();
+    TF1* fit = new TF1("fit1", "pol3");
+    hpos->Fit("fit1");
   if (display)
   {
     hpos->GetXaxis()->SetTitle("Frame Number");
@@ -141,18 +143,31 @@ void fitGaussian(
     TCanvas* can = new TCanvas();
     hpos->SetLineColor(46);
     hpos->SetLineWidth(1);
-    hpos->Fit("pol3");
+    //hpos->Fit("pol3");
     hpos->Draw();
     can->Update();
     can->WaitPrimitive();
   }
-
+  // NOTE this needs to be changed for other functions
+  std::stringstream output;
+  std::string xvar = "";
+  for(unsigned it=0; it<fit->GetNpar(); ++it){
+    output << xvar;
+    if(xvar!="") output << "*";
+    output <<fit->GetParameter(it);
+    if(it<(fit->GetNpar()-1)) output << "+";
+    std::cout << "par: " << it << " " << fit->GetParameter(it) << std::endl;
+    if(xvar!="") xvar+="*x";
+    else xvar+="x";
+  }
+  std::cout << output.str() << std::endl;
   delete hpos;
+  return output.str();
 }
 
-  void fitPosition(std::vector<TH1D*> hist,
-		   std::vector<double> timing_pos,
-		   bool display)
+  std::string fitPosition(std::vector<TH1D*> hist,
+			  std::vector<double> timing_pos,
+			  bool display,bool fitGaus)
 {
   TCanvas* can = new TCanvas();
   hist.at(0)->Draw();
@@ -188,11 +203,13 @@ void fitGaussian(
     hpos->SetBinContent(i+1,mean);
     hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
     */
+
+    if(fitGaus){
       double mean=0,sigma=0,max=0,bkg=0;
       fitGaussian(hist.at(i),mean,sigma,max,bkg,false);
       hpos->SetBinContent(i+1,mean);
       hpos->SetBinError(i+1,hist.at(i)->GetMeanError()); 
-
+    }
     
     color+=1;
     if(color>5) continue;
@@ -200,23 +217,39 @@ void fitGaussian(
     hist.at(i)->Draw("same");
 
   }
-    can->Update();
-    can->WaitPrimitive();  
+  can->Update();
+  can->WaitPrimitive();
+  
+  TF1* fit = new TF1("fit1", "pol3");
+  hpos->Fit("pol3");
+  
   if (display)
-  {
-    hpos->GetXaxis()->SetTitle("Time Stamp");
-    hpos->GetYaxis()->SetTitle("Position in #mu m");
-    TCanvas* can = new TCanvas();
-    hpos->SetLineColor(1);
-    hpos->SetLineWidth(1);
-    hpos->Fit("pol3");
-    hpos->Draw();
-    can->Update();
-    can->WaitPrimitive();
-    delete can;
+    {
+      hpos->GetXaxis()->SetTitle("Time Stamp");
+      hpos->GetYaxis()->SetTitle("Position in #mu m");
+      TCanvas* can = new TCanvas();
+      hpos->SetLineColor(1);
+      hpos->SetLineWidth(1);    
+      hpos->Draw();
+      can->Update();
+      can->WaitPrimitive();
+      delete can;
+    }
+  
+  std::stringstream output;
+  std::string xvar = "";
+  for(unsigned it=0; it<fit->GetNpar(); ++it){
+    output << xvar;
+    if(xvar!="") output << "*";
+    output <<fit->GetParameter(it);
+    if(it<(fit->GetNpar()-1)) output << "+";
+    std::cout << "par: " << it << " " << fit->GetParameter(it) << std::endl;
+    if(xvar!="") xvar+="*x";
+    else xvar+="x";
   }
-
+  std::cout << output.str() << std::endl;
   delete hpos;
+  return output.str();
 }
   
 

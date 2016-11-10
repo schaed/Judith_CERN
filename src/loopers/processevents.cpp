@@ -51,6 +51,7 @@ void ProcessEvents::loop()
     
     for(unsigned nSens=0; nSens<_refDevice->getNumSensors(); ++nSens){
       _refDevice->getSensor(nSens)->setFrameNumber(refEvent->getFrameNumber());
+      _refDevice->getSensor(nSens)->setTimeStamp(refEvent->getTimeStamp());
       //std::cout << "ONE: " << _refDevice->getSensor(nSens)->getOffY() << std::endl;
     }
     
