@@ -127,9 +127,9 @@ void Alignment::readFile()
       else if (!row->key.compare("frameNumberFunc y"))
         sensor->setFrameNumberFuncY(row->value);
       else if (!row->key.compare("timeStampFunc x"))
-        sensor->setFrameNumberFuncX(row->value);
+        sensor->setTimeStampFuncX(row->value);
       else if (!row->key.compare("timeStampFunc y"))
-        sensor->setFrameNumberFuncY(row->value);
+        sensor->setTimeStampFuncY(row->value);
       else
         throw "Alignment: can't parse config row";
     }

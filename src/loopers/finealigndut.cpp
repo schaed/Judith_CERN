@@ -171,7 +171,7 @@ void FineAlignDut::loop()
 	    std::string tfunx = Processors::fitPosition(x_hists,v_timeStamp,_displayFits);
 	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncX(tfunx);
 	    std::string tfuny = Processors::fitPosition(y_hists,v_timeStamp,_displayFits);
-	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncY(tfunx);
+	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncY(tfuny);
 	    
 	    for(unsigned it=0;it<x_hists.size(); ++it){
 	      delete x_hists.at(it);
