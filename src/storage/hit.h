@@ -9,8 +9,8 @@ class Plane;
 class Hit
 {
 private:
-  unsigned int _pixX; // X pixel of this hit
-  unsigned int _pixY;
+  int _pixX; // X pixel of this hit
+  int _pixY;
   double _posX; // X position of the hit on the sensor
   double _posY;
   double _posZ;
@@ -41,7 +41,7 @@ public:
   Plane* getPlane() const;
 
   // Inline setters and getters since they will be used frequently
-  inline void setPix(unsigned int x, unsigned int y) { _pixX = x; _pixY = y; }
+  inline void setPix( int x,  int y) { _pixX = x; _pixY = y; }
   inline void setPos(double x, double y, double z) { _posX = x; _posY = y; _posZ = z; }
   inline void setValue(double value) { _value = value; }
   inline void setValueInt(int value) { _valueInt = value; }
@@ -54,8 +54,8 @@ public:
   inline void setLowFreqFFTPhase(double LowFreqFFTPhase) { _lowFreqFFTPhase = LowFreqFFTPhase; }    
   inline void setChi2(double chi2) { _Chi2 = chi2; }      
 
-  inline unsigned int getPixX() const { return _pixX; }
-  inline unsigned int getPixY() const { return _pixY; }
+  inline  int getPixX() const { return _pixX; }
+  inline  int getPixY() const { return _pixY; }
   inline double getPosX() const { return _posX; }
   inline double getPosY() const { return _posY; }
   inline double getPosZ() const { return _posZ; }

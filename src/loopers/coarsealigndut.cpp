@@ -30,7 +30,7 @@ void CoarseAlignDut::loop()
   for (ULong64_t nevent = _startEvent; nevent <= _endEvent; nevent++)
   {
     Storage::Event* refEvent = _refStorage->readEvent(nevent+_eventSkip-1);
-    Storage::Event* dutEvent = _dutStorage->readEvent(nevent);
+    Storage::Event* dutEvent = _dutStorage->readEvent(nevent+_eventSkip-1);
 
     if (refEvent->getNumClusters() || dutEvent->getNumClusters())
       throw "CoarseAlignDut: can't recluster an event, mask the tree in the input";
@@ -56,7 +56,7 @@ void CoarseAlignDut::loop()
   for (unsigned int nsensor = 0; nsensor < _dutDevice->getNumSensors(); nsensor++)
   {
     Mechanics::Sensor* sensor = _dutDevice->getSensor(nsensor);
-    std::cout << "CoarseAlignDut::loop - sensor name: " << sensor->getName() << std::endl;
+    //std::cout << "CoarseAlignDut::loop - sensor name: " << sensor->getName() << std::endl;
     //S.F: TH1D* alignX = correlation.getAlignmentPlotX(nsensor);
     double offsetX = 0;
     double sigmaX = 0;

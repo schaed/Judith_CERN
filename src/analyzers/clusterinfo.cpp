@@ -139,7 +139,7 @@ ClusterInfo::ClusterInfo(const Mechanics::Device* device,
           << ";Charge [V]"
           << ";Clusters";
     TH1D* chg = new TH1D(name.str().c_str(), title.str().c_str(),
-                         200, 0.0, 0.4);
+                         1000, -0.1, 0.4);
     chg->SetDirectory(plotDir);
     _charge.push_back(chg);
 
