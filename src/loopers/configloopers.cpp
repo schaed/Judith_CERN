@@ -84,6 +84,8 @@ void configFineAlign(const ConfigParser& config, FineAlignDut& fineAlign)
       fineAlign.setDisplayFits(ConfigParser::valueToLogical(row->value));
     else if (!row->key.compare("relaxation"))
       fineAlign.setRelaxation(ConfigParser::valueToNumerical(row->value));
+    else if (!row->key.compare("framenum pos corr"))
+      fineAlign.setFrameNumberCorr(ConfigParser::valueToNumerical(row->value));
     else
       throw "Loopers: can't parse fine align row";
   }

@@ -26,7 +26,7 @@ private:
   double _binsPerPixBroad;
   bool _displayFits;
   bool _relaxation;
-
+  bool _DOFRAMENUMBER;
   TDirectory* _dir;
 
 public:
@@ -53,6 +53,7 @@ public:
   void setNumPixXBroad(unsigned int value);
   void setBinsPerPixBroad(double value);
   void setDisplayFits(bool value);
+  void setFrameNumberCorr(bool value);  
   void setRelaxation(double value);
 };
 

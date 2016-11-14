@@ -161,19 +161,17 @@ void FineAlignDut::loop()
 	      x_hists.push_back(v_residual.at(i).getResidualX(nsens));
 	      y_hists.push_back(v_residual.at(i).getResidualY(nsens));	      
 	    }
-	    bool DOFRAMENUMBER=true;
-	    
 	    std::string funx = Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits);
-	    if(DOFRAMENUMBER) sensor->setFrameNumberFuncX(funx);
+	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncX(funx);
 	    std::string funy = Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits);
-	    if(DOFRAMENUMBER) sensor->setFrameNumberFuncY(funy);	    
+	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncY(funy);	    
 	    
 
 	    // versus time stamp
 	    std::string tfunx = Processors::fitPosition(x_hists,v_timeStamp,_displayFits);
-	    if(!DOFRAMENUMBER) sensor->setTimeStampFuncX(tfunx);
+	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncX(tfunx);
 	    std::string tfuny = Processors::fitPosition(y_hists,v_timeStamp,_displayFits);
-	    if(!DOFRAMENUMBER) sensor->setTimeStampFuncY(tfunx);
+	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncY(tfunx);
 	    
 	    for(unsigned it=0;it<x_hists.size(); ++it){
 	      delete x_hists.at(it);
@@ -256,6 +254,7 @@ void FineAlignDut::setBinsPerPix(double value) { _binsPerPix = value; }
 void FineAlignDut::setNumPixXBroad(unsigned int value) { _numPixXBroad = value; }
 void FineAlignDut::setBinsPerPixBroad(double value) { _binsPerPixBroad = value; }
 void FineAlignDut::setDisplayFits(bool value) { _displayFits = value; }
+void FineAlignDut::setFrameNumberCorr(bool value) { _DOFRAMENUMBER = value; }  
 void FineAlignDut::setRelaxation(double value) { _relaxation = value; }
 
 FineAlignDut::FineAlignDut(Mechanics::Device* refDevice,
@@ -268,6 +267,7 @@ FineAlignDut::FineAlignDut(Mechanics::Device* refDevice,
                            ULong64_t numEvents,
                            Long64_t eventSkip,
 			   TDirectory* dir) :
+			   
   Looper(refInput, dutInput, startEvent, numEvents, eventSkip),
   _refDevice(refDevice),
   _dutDevice(dutDevice),
@@ -280,6 +280,7 @@ FineAlignDut::FineAlignDut(Mechanics::Device* refDevice,
   _numPixXBroad(20),
   _binsPerPixBroad(1),
   _displayFits(true),
+  _DOFRAMENUMBER(true),
   _relaxation(0.8),
   _dir(dir)
 {
