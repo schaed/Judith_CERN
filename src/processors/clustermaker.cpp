@@ -58,6 +58,7 @@ void ClusterMaker::generateClusters(Storage::Event* event, unsigned int planeNum
   for (unsigned int nhit = 0; nhit < plane->getNumHits(); nhit++)
   {
      Storage::Hit* hit = plane->getHit(nhit);
+     //std::cout << hit->getPixX() << std::endl;
      //std::cout << "addHit: " << nhit  << " isclustered: " <<hit->getCluster() << " isHit: " << hit->getIsHit() << std::endl;
     // If the hit isn't clustered, make a new cluster
     if (!hit->getCluster()) {

@@ -55,6 +55,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
   {
     //std::cout << "F: " << dutEvent->getFrameNumber() << std::endl;
     _dutDevice->getSensor(nsensor)->setFrameNumber(dutEvent->getFrameNumber());
+    _dutDevice->getSensor(nsensor)->setTimeStamp(refEvent->getTimeStamp());     // used the RCE time stamp for fitting
     for (unsigned int nhit = 0; nhit < dutEvent->getNumHits(); nhit++)
     {
       const Storage::Hit* hit = dutEvent->getHit(nhit);

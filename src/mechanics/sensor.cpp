@@ -121,10 +121,11 @@ void Sensor::pixelToSpace(double pixX, double pixY,
     //throw "Sensor: requested pixel out of range: "; 
   }
   x = 0, y = 0, z = 0;
-
+  //std::cout << "getSensitiveX:  " << getSensitiveX() << std::endl;
   const double halfX = getSensitiveX() / 2.0;
   const double halfY = getSensitiveY() / 2.0;
 
+  //cout << "pixX: " << pixX << " Y " << pixY << std::endl;
   x = pixX * _pitchX; // To the middle of the pixel
   x -= halfX; // Origin on center of sensor
 
@@ -132,6 +133,7 @@ void Sensor::pixelToSpace(double pixX, double pixY,
   y -= halfY;
 
   rotateToGlobal(x, y, z);
+  //std::cout << "getOffX: " << getOffX() << std::endl;
   //std::cout <<_frameNumber << " " <<  getOffX() << std::endl;
   // adding the offset from frame number
   x += getOffX();
@@ -259,7 +261,9 @@ double Sensor::getPitchX() const { return _pitchX; }
 double Sensor::getPitchY() const { return _pitchY; }
 double Sensor::getDepth() const { return _depth; }
 double Sensor::getXox0() const { return _xox0; }
-  double Sensor::getOffX() const { return (_offX  + (f_frameFuncX ? f_frameFuncX->Eval(double(_frameNumber)):0.0) + (f_timeStampFuncX ? f_timeStampFuncX->Eval(_timeStamp):0.0)); }
+  double Sensor::getOffX() const {
+    //std::cout << "fram: " << _frameNumber << " Time: " << _timeStamp << std::endl;
+    return (_offX  + (f_frameFuncX ? f_frameFuncX->Eval(double(_frameNumber)):0.0) + (f_timeStampFuncX ? f_timeStampFuncX->Eval(_timeStamp):0.0)); }
   double Sensor::getOffY() const { return (_offY + (f_frameFuncY ? f_frameFuncY->Eval(double(_frameNumber)):0.0) + (f_timeStampFuncY ? f_timeStampFuncY->Eval(_timeStamp):0.0)); }
 double Sensor::getOffZ() const { return _offZ; }
 double Sensor::getRotX() const { return _rotX; }
