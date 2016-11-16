@@ -10,6 +10,7 @@
 #include "synchronizeBunchXing.h"
 #include "noisescan.h"
 #include "../configparser.h"
+#include <iostream>
 
 namespace Loopers {
 
@@ -84,8 +85,9 @@ void configFineAlign(const ConfigParser& config, FineAlignDut& fineAlign)
       fineAlign.setDisplayFits(ConfigParser::valueToLogical(row->value));
     else if (!row->key.compare("relaxation"))
       fineAlign.setRelaxation(ConfigParser::valueToNumerical(row->value));
-    else if (!row->key.compare("framenum pos corr"))
+    else if (!row->key.compare("framenum pos corr")){
       fineAlign.setFrameNumberCorr(ConfigParser::valueToLogical(row->value));
+    }
     else
       throw "Loopers: can't parse fine align row";
   }

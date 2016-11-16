@@ -196,9 +196,9 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 	}
       }
 
-      if((tx - sensor->getOffX())>105.0 && (tx - sensor->getOffX())<115.0
-	 && (ty - sensor->getOffY())>-15.0 && (ty - sensor->getOffY())<-5.0)
-	hhit->processEvent(dutEvent);
+      //if((tx - sensor->getOffX())>105.0 && (tx - sensor->getOffX())<115.0
+      // && (ty - sensor->getOffY())>-15.0 && (ty - sensor->getOffY())<-5.0)
+      //hhit->processEvent(dutEvent);
       
     }
   }// end track loop
@@ -208,7 +208,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
     
     // draw the clusters
     hcluster->processEvent(dutEvent);
-    //hhit->processEvent(dutEvent);
+    hhit->processEvent(dutEvent);
           
     for (unsigned int nplane = 0; nplane < dutEvent->getNumPlanes(); nplane++){
       Storage::Plane* plane = dutEvent->getPlane(nplane);	  

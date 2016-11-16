@@ -173,6 +173,8 @@ void generateSensors(const ConfigParser& config, Device* device)
       masked = ConfigParser::valueToLogical(row->value);
     else
       throw "Mechanics: can't parse sensor row";
+
+    //std::cout << "row;" << row->key << " " << pitchX << " " << pitchY << std::endl;
   }
 }
 

@@ -162,17 +162,20 @@ void FineAlignDut::loop()
 	      y_hists.push_back(v_residual.at(i).getResidualY(nsens));	      
 	    }
 	    std::string funx = Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits);
+
 	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncX(funx);
+	    else sensor->setFrameNumberFuncX("0.0");
 	    std::string funy = Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits);
 	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncY(funy);	    
-	    
+	    else sensor->setFrameNumberFuncY("0.0");	    
 
 	    // versus time stamp
 	    std::string tfunx = Processors::fitPosition(x_hists,v_timeStamp,_displayFits);
 	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncX(tfunx);
+	    else sensor->setTimeStampFuncX("0.0");	    
 	    std::string tfuny = Processors::fitPosition(y_hists,v_timeStamp,_displayFits);
 	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncY(tfuny);
-	    
+	    else sensor->setTimeStampFuncY("0.0");
 	    for(unsigned it=0;it<x_hists.size(); ++it){
 	      delete x_hists.at(it);
 	      delete y_hists.at(it);

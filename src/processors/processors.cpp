@@ -220,8 +220,8 @@ void fitGaussian(
   can->Update();
   can->WaitPrimitive();
   
-  TF1* fit = new TF1("fit1", "pol3");
-  hpos->Fit("pol3");
+  TF1* fit = new TF1("fit2", "pol3");
+  hpos->Fit("fit2");
   
   if (display)
     {

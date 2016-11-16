@@ -3,16 +3,16 @@
 #include "makeMap.h"
 
 int makeMap(const double pixX = 50., // pixel size X
-		const double pixY = 50., // pixel size Y
-		const double resX = 8., // telescope resolution X
-		const double resY = 8., // telescope resolution Y
-		const double resErrX = 1., // uncertainty on telescope resolution X
-		const double resErrY = 1., // uncertainty on telescope resolution Y
-		const double gridX = 1., // size of the divisions of the grid in X
-		const double gridY = 1., // size of the divisions of the grid in Y
-		const unsigned int clusterType = CLUSTERTYPE_SINGLE, // cluster type: 1 = single pixel, 2 = 2 adjacent pixels, 3 = 3 pixels (L shape), 4 = 2x2 pixels block
-		const unsigned int integratorType = INTEGRATORTYPE_ADAPTIVE, // integrator type: 0 = adaptive, 1 = GSLMC (slow)
-		const  bool holdPlot = false){ // leaves the TCanvas open at the end of the script
+	    const double pixY = 50., // pixel size Y
+	    const double resX = 8., // telescope resolution X
+	    const double resY = 8., // telescope resolution Y
+	    const double resErrX = 1., // uncertainty on telescope resolution X
+	    const double resErrY = 1., // uncertainty on telescope resolution Y
+	    const double gridX = 1., // size of the divisions of the grid in X
+	    const double gridY = 1., // size of the divisions of the grid in Y
+	    const unsigned int clusterType = CLUSTERTYPE_SINGLE, // cluster type: 1 = single pixel, 2 = 2 adjacent pixels, 3 = 3 pixels (L shape), 4 = 2x2 pixels block
+	    const unsigned int integratorType = INTEGRATORTYPE_ADAPTIVE, // integrator type: 0 = adaptive, 1 = GSLMC (slow)
+	    const  bool holdPlot = false){ // leaves the TCanvas open at the end of the script
 
   // opening output file
   char fileName[1000];
@@ -31,7 +31,7 @@ int makeMap(const double pixX = 50., // pixel size X
   double yMin = DEFAULT_DOUBLE;
   double yMax = DEFAULT_DOUBLE;
   if(defineSurface(xMin, xMax, yMin, yMax,
-		pixX, pixY,
+		   pixX, pixY,
 		   clusterType)){
     cout << " - ERROR!!! - cannot define sensor surface" << endl;
     return 1;
@@ -158,7 +158,7 @@ int makeMap(const double pixX = 50., // pixel size X
 
   // map of uncertainties
   TCanvas *cMapErr = getCanvas(clusterType, 
-			    "cMapErr");
+			       "cMapErr");
   cMapErr -> SetLogz();
   mapErr -> GetXaxis() -> SetTitle("x [#mu]");
   mapErr -> GetYaxis() -> SetTitle("y [#mu]");

@@ -131,7 +131,7 @@ class Plane:
         return float(self.ReturnPixel(x_truth,r))*self.pixelwidth + self.x + self.pixelwidth/2.0
 
 NEVENTS=10000
-DUT=True
+DUT=False
 dut_offset=12.0/2.0*50.0+20.0
 #slope_spread = 545.0*math.tan(0.000185)
 slope_spread = 545.0*math.tan(0.000104)
@@ -141,7 +141,7 @@ can = ROOT.TCanvas()
 truth_residual = ROOT.TH1F('truth_residual','truth_residual',2000,-100.0,100.0)
 #for offset in [[0.0, 15.0, 0.0, -4.5, 10.0]]:
 #-100,-11,-100,19.5,-100,-19
-for offset in [[-11.0,-100.0, 19.5, -100.0, -19.0]]:
+for offset in [[-11.0,-100.0, 0.5, -100.0, 50.0]]:
 #for offset in [[89.0,-100.0, 119.5, -100.0, 81.0]]:
 
     telescope = []
@@ -167,19 +167,19 @@ for offset in [[-11.0,-100.0, 19.5, -100.0, -19.0]]:
         if DUT:
             hists += [ROOT.TH1F('dut','dut',2000,-100.0,100.0)]        
         hists += [ROOT.TH1F('plane3','plane3',100,-100.0,100.0)]
-        hists += [ROOT.TH1F('plane4','plane4',200,-500.0,500.0)]        
+        #hists += [ROOT.TH1F('plane4','plane4',200,-500.0,500.0)]        
         hists += [ROOT.TH1F('plane5','plane5',100,-100.0,100.0)]        
         if DUT:
             hists += [ROOT.TH1F('dut_den','dut_den',2000,-100.0,100.0)]            
         # Generate Telescope
-        telescope += [ Plane(0.0,      0.0, pixelwidth=250.0)]
-        telescope += [ Plane(offset[0],50.0, pixelwidth=50.0)]
-        telescope += [ Plane(offset[1],100.0, pixelwidth=250.0)]
+        telescope += [ Plane(0.0,      0.0, pixelwidth=50.0)]
+        telescope += [ Plane(offset[0],50.0, pixelwidth=250.0)]
+        telescope += [ Plane(offset[1],100.0, pixelwidth=50.0)]
         if DUT:
             telescope += [ Plane(dut_offset, 271.5, pixelwidth=33.0, mask=True, npixel=1)]        
-        telescope += [ Plane(offset[2],445.0, pixelwidth=50.0)]
-        telescope += [ Plane(offset[3],495.0, pixelwidth=250.0)]
-        telescope += [ Plane(offset[4],545.0, pixelwidth=50.0)]
+        telescope += [ Plane(offset[2],450.0, pixelwidth=250.0)]
+        #telescope += [ Plane(offset[3],495.0, pixelwidth=250.0)]
+        telescope += [ Plane(offset[4],550.0, pixelwidth=250.0)]
         if DUT: # must match above plane
             telescope += [ Plane(dut_offset, 271.5, pixelwidth=33.0, mask=True, npixel=1, allhits=True)]                
               

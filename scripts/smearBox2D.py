@@ -8,14 +8,14 @@ hsmear=ROOT.TH2F('smear','',100,-100.0,100.0,100,-100.0,100.0)
 
 
 reso = 20.1
-reso = 14.1
+reso = 8.5
 r = ROOT.TRandom3();
 r.SetSeed(5)
 NEVT=1000000
-w=1.0/float(NEVT)*100.0
+w=1.0/float(NEVT)*60.0
 for e in range(0,NEVT): #for i in range(25,75):
-    a=r.Rndm()*100.0 - 50.0
-    b=r.Rndm()*100.0 - 50.0    
+    a=r.Rndm()*60.0 - 30.0
+    b=r.Rndm()*60.0 - 30.0    
     #if round(a)==0:
     #    print a, round(a)
     hbox.Fill(round(a),round(b),w)

@@ -77,7 +77,8 @@ void DUTCorrelation::processEvent(const Storage::Event* refEvent,
         for (unsigned int ncut = 0; ncut < _numClusterCuts; ncut++)
           if (!_clusterCuts.at(ncut)->check(cluster1)) { pass = false; break; }
         if (!pass) continue;
-
+	//std::cout << cluster0->getPosX() << " " << cluster1->getPosX() << " Y " << cluster1->getPosY() << " pos: " << cluster1->getPixX() << " " << cluster1->getHit(0)->getPixX() << std::endl;
+	//std::cout << "   Y " << cluster0->getPosY() << " " << cluster1->getPosY() <<  " pos: " << cluster1->getPixY() << " " << cluster1->getHit(0)->getPixY() << std::endl;	
         corrX->Fill(cluster0->getPosX(), cluster1->getPosX());
         corrY->Fill(cluster0->getPosY(), cluster1->getPosY());
         alignX->Fill(cluster1->getPosX() - cluster0->getPosX());
