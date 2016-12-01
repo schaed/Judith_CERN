@@ -105,7 +105,7 @@ void FineAlignDut::loop()
 	  v_residual.at(i).addCut(cut1b);
 	  v_residual.at(i).addCut(cut2b);
 	}
-	
+	std::vector<std::string> tmp_funcX,tmp_funcY,tmp_funcTimeX,tmp_funcTimeY;
 	unsigned last_res=0,my_evt_res=0;
 	for (ULong64_t nevent = _startEvent; nevent <= _endEvent; nevent++)
 	  {
@@ -118,6 +118,24 @@ void FineAlignDut::loop()
 	      _clusterMaker->generateClusters(refEvent, nplane);
 	    for (unsigned int nplane = 0; nplane < dutEvent->getNumPlanes(); nplane++)
 	      _clusterMaker->generateClusters(dutEvent, nplane);
+
+	    // apply the existing position corrections
+	    for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); ++nsens){
+	      Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);
+	      sensor->setFrameNumber(refEvent->getFrameNumber());
+	      sensor->setTimeStamp(refEvent->getTimeStamp());
+
+	      if(!_DOITERATIVEPOSCORR){		
+		sensor->setFrameNumberFuncX("0.0");
+		sensor->setFrameNumberFuncY("0.0");
+		sensor->setTimeStampFuncX("0.0");
+		sensor->setTimeStampFuncY("0.0");
+	      }
+	      tmp_funcX.push_back(sensor->getFrameNumberFuncX());
+	      tmp_funcY.push_back(sensor->getFrameNumberFuncY());
+	      tmp_funcTimeX.push_back(sensor->timeStampFuncX());
+	      tmp_funcTimeY.push_back(sensor->timeStampFuncY());		
+	    }
 	    
 	    Processors::applyAlignment(refEvent, _refDevice);
 	    Processors::applyAlignment(dutEvent, _dutDevice);
@@ -153,7 +171,7 @@ void FineAlignDut::loop()
 	  {
 	    std::cout << "sensors: " << nsens << " out of " << _dutDevice->getNumSensors() << std::endl;
 	    Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);
-
+	    
 	    // list the X and Y residual per frameNumber
 	    for(unsigned i=0; i<n_residuals; ++i){
 	      std::cout << "X int: " << i << " "  << v_residual.at(i).getResidualX(nsens)->GetMean() << " " << (v_timeStamp.at(i)/1.0e6) << std::endl;
@@ -161,21 +179,22 @@ void FineAlignDut::loop()
 	      x_hists.push_back(v_residual.at(i).getResidualX(nsens));
 	      y_hists.push_back(v_residual.at(i).getResidualY(nsens));	      
 	    }
-	    std::string funx = Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits);
+	    bool fitGaus=true;
+	    std::string funx = Processors::fitPosition(x_hists,unsigned(ndiv),_displayFits, fitGaus);
 
-	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncX(funx);
-	    else sensor->setFrameNumberFuncX("0.0");
-	    std::string funy = Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits);
-	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncY(funy);	    
-	    else sensor->setFrameNumberFuncY("0.0");	    
+	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncX(tmp_funcX.at(nsens)=="0.0"?funx :funx+"+"+tmp_funcX.at(nsens));
+	    else sensor->setFrameNumberFuncX(tmp_funcX.at(nsens)=="0.0"?"0.0" :tmp_funcX.at(nsens));
+	    std::string funy = Processors::fitPosition(y_hists,unsigned(ndiv),_displayFits,fitGaus);
+	    if(_DOFRAMENUMBER) sensor->setFrameNumberFuncY(tmp_funcY.at(nsens)=="0.0"?funy :funy+"+"+tmp_funcY.at(nsens));	    
+	    else sensor->setFrameNumberFuncY(tmp_funcY.at(nsens)=="0.0"?"0.0" :tmp_funcY.at(nsens));	    
 
 	    // versus time stamp
 	    std::string tfunx = Processors::fitPosition(x_hists,v_timeStamp,_displayFits);
-	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncX(tfunx);
-	    else sensor->setTimeStampFuncX("0.0");	    
+	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncX(tmp_funcTimeX.at(nsens)=="0.0"?tfunx :tfunx+"+"+tmp_funcTimeX.at(nsens));
+	    else sensor->setTimeStampFuncX(tmp_funcTimeX.at(nsens)=="0.0"?"0.0": tmp_funcTimeX.at(nsens));	    
 	    std::string tfuny = Processors::fitPosition(y_hists,v_timeStamp,_displayFits);
-	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncY(tfuny);
-	    else sensor->setTimeStampFuncY("0.0");
+	    if(!_DOFRAMENUMBER) sensor->setTimeStampFuncY(tmp_funcTimeY.at(nsens)=="0.0"?tfuny :tfuny+"+"+tmp_funcTimeY.at(nsens));
+	    else sensor->setTimeStampFuncY(tmp_funcTimeY.at(nsens)=="0.0"?"0.0": tmp_funcTimeY.at(nsens));
 	    for(unsigned it=0;it<x_hists.size(); ++it){
 	      delete x_hists.at(it);
 	      delete y_hists.at(it);
@@ -258,6 +277,7 @@ void FineAlignDut::setNumPixXBroad(unsigned int value) { _numPixXBroad = value; 
 void FineAlignDut::setBinsPerPixBroad(double value) { _binsPerPixBroad = value; }
 void FineAlignDut::setDisplayFits(bool value) { _displayFits = value; }
 void FineAlignDut::setFrameNumberCorr(bool value) { _DOFRAMENUMBER = value; }  
+void FineAlignDut::setIterativePosCorr(bool value) { _DOITERATIVEPOSCORR = value; }  
 void FineAlignDut::setRelaxation(double value) { _relaxation = value; }
 
 FineAlignDut::FineAlignDut(Mechanics::Device* refDevice,
@@ -284,6 +304,7 @@ FineAlignDut::FineAlignDut(Mechanics::Device* refDevice,
   _binsPerPixBroad(1),
   _displayFits(true),
   _DOFRAMENUMBER(true),
+  _DOITERATIVEPOSCORR(false),
   _relaxation(0.8),
   _dir(dir)
 {

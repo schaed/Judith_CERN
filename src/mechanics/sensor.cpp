@@ -261,6 +261,8 @@ double Sensor::getPitchX() const { return _pitchX; }
 double Sensor::getPitchY() const { return _pitchY; }
 double Sensor::getDepth() const { return _depth; }
 double Sensor::getXox0() const { return _xox0; }
+  double Sensor::getOffXNonTimeDep() const { return _offX; }
+  double Sensor::getOffYNonTimeDep() const { return _offY; }  
   double Sensor::getOffX() const {
     //std::cout << "fram: " << _frameNumber << " Time: " << _timeStamp << std::endl;
     return (_offX  + (f_frameFuncX ? f_frameFuncX->Eval(double(_frameNumber)):0.0) + (f_timeStampFuncX ? f_timeStampFuncX->Eval(_timeStamp):0.0)); }

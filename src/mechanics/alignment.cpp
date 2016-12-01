@@ -54,8 +54,8 @@ void Alignment::writeFile()
   {
     Sensor* sensor = _device->getSensor(nsens);
     file << "[Sensor " << nsens << "]" << endl;
-    file << "offset x   : " << sensor->getOffX() << endl;
-    file << "offset y   : " << sensor->getOffY() << endl;
+    file << "offset x   : " << sensor->getOffXNonTimeDep() << endl;
+    file << "offset y   : " << sensor->getOffYNonTimeDep() << endl;
     file << "offset z   : " << sensor->getOffZ() << endl;
     file << "rotation x : " << sensor->getRotX() << endl;
     file << "rotation y : " << sensor->getRotY() << endl;

@@ -88,6 +88,9 @@ void configFineAlign(const ConfigParser& config, FineAlignDut& fineAlign)
     else if (!row->key.compare("framenum pos corr")){
       fineAlign.setFrameNumberCorr(ConfigParser::valueToLogical(row->value));
     }
+    else if (!row->key.compare("iterative pos corr")){
+      fineAlign.setIterativePosCorr(ConfigParser::valueToLogical(row->value));
+    }
     else
       throw "Loopers: can't parse fine align row";
   }

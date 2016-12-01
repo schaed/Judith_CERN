@@ -81,6 +81,8 @@ public:
 
   void setFrameNumber(long unsigned frameNumber){_frameNumber = frameNumber;} 
   void setTimeStamp(double timeStamp){_timeStamp = timeStamp/1.0e8;} 
+  long unsigned getFrameNumber(){return _frameNumber;} 
+  double getTimeStamp(){return _timeStamp;} 
 
   void rotateToGlobal(double& x, double& y, double& z) const;
   void rotateToSensor(double& x, double& y, double& z) const;
@@ -103,6 +105,8 @@ public:
   double getPosPitchY() const;
   double getDepth() const;
   double getXox0() const;
+  double getOffXNonTimeDep() const;
+  double getOffYNonTimeDep() const;
   double getOffX() const;
   double getOffY() const;
   double getOffZ() const;
