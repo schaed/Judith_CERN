@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 #include <TFile.h>
 #include <TDirectory.h>
@@ -92,7 +93,8 @@ Event* StorageIO::readEvent(Long64_t n)
         cluster->setTrack(track);
       }
     }
-    //if(numHits) cout << "numHits " << numHits <<endl;
+    // if(numHits) cout << "numHits " << numHits <<endl;
+
     // Kill if there are no hits for Tower Jazz, only for 1 plane dut
     if(bHitIsHit && bHitValidFit && numHits==0 && _numPlanes==1) event->setInvalid(true);
     
@@ -121,7 +123,7 @@ Event* StorageIO::readEvent(Long64_t n)
       //				       << " " <<  hitTiming[nhit] << std::endl;      
       //if (nhit<4.5) continue;
       if(numHits>10 && _numPlanes==1){
-	if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>25.0 && hitT0[nhit]<230.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<250.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]>1.9)){ continue; }
+	if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>25.0 && hitT0[nhit]<230.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<250.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]>1.)){ continue; }
 	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.01 && hitT0[nhit]>50.0 && hitT0[nhit]<110.0 && hitTiming[nhit]>0.3 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>1.2)){ continue; }
 	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.01 && hitT0[nhit]>50.0 && hitT0[nhit]<110.0 && hitTiming[nhit]>0.3 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>0.2)){ continue; }		
 	else if(nhit>3.5) continue;
@@ -130,11 +132,32 @@ Event* StorageIO::readEvent(Long64_t n)
 	//bool requireAmpHit=false;
 	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && (hitValue[nhit]>0.003 && hitT0[nhit]>80.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.5 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.6))requireAmpHit=true;
 	//if(!requireAmpHit) continue;
+	//cout << nhit << "   " << "   " << hitPixX[nhit] << "   " <<hitPixY[nhit] << endl;
       }
       //if(_numPlanes==1) std::cout << "   pass " << nhit << " charge: " << hitValue[nhit] << " " <<  hitLowFreqFFT[nhit]
       //		  << " " << hitT0[nhit] << " " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
       Hit* hit = event->newHit(nplane);
-      hit->setPix(hitPixX[nhit], hitPixY[nhit]);
+      if(numHits>9 && _numPlanes==1){
+      	if(nhit==0) hit->setPix(-2, 0);
+      	else if(nhit==1) hit->setPix(-2, -1);	
+      	else if(nhit==2) hit->setPix(-1,0);	
+      	else if(nhit==3) hit->setPix(-1,-1);	
+      	else hit->setPix(hitPixX[nhit], hitPixY[nhit]);	
+      	//std::cout << "   nhit: " << nhit << " pixX: " << hitPixX[nhit]
+      	//	  << " pixY: " << hitPixY[nhit] << std::endl;
+      }
+      else
+      	hit->setPix(hitPixX[nhit], hitPixY[nhit]);
+      //hit->setPix(hitPixX[nhit], hitPixY[nhit]);
+      //cout <<"Channel: "<< nhit << endl;
+      // if (nhit==2 && _numPlanes==1) hit->setPix(-1,-1);
+      // else if (nhit==0 && _numPlanes==1) hit->setPix(-1,0);
+      // else if (nhit==3 && _numPlanes==1) hit->setPix(-2,-1);
+      // else if (nhit==1 && _numPlanes==1) hit->setPix(-2,0);
+      // else hit->setPix(hitPixX[nhit], hitPixY[nhit]);
+      // if(_numPlanes==1) { cout << "Channel:  " << nhit << endl;
+      // 	cout <<"PixX:   " << hit->getPixX() << endl;
+      // 	cout <<"PixY:   " << hit->getPixY() << endl;}
       hit->setPos(hitPosX[nhit], hitPosY[nhit], hitPosZ[nhit]);
       hit->setT0(hitT0[nhit]);
       if(hitValueType==kInt)      
@@ -598,4 +621,5 @@ StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes
       }
   }
   
+
 }

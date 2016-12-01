@@ -84,7 +84,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
       Mechanics::Sensor* hack_sensor = _refDevice->getSensor(3);
       double hack_tx = 0, hack_ty = 0, hack_tz = 0;
       Processors::trackSensorIntercept(track, hack_sensor, hack_tx, hack_ty, hack_tz);
-
+      // 
       for (unsigned int ncluster = 0; ncluster < hack_plane->getNumClusters(); ncluster++)
       {
         Storage::Cluster* cluster = hack_plane->getCluster(ncluster);
@@ -101,16 +101,22 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 
     pass_track_selection=true;
     
+
     for (unsigned int nsensor = 0; nsensor < _dutDevice->getNumSensors(); nsensor++)
     {
       Mechanics::Sensor* sensor = _dutDevice->getSensor(nsensor);
 
       double tx = -9999.0, ty = -9999.0, tz = -9999.0;
+      double ex = -9999.0, ey = -9999.0;
+      double dx = -9999.0, dy = -9999.0;
       Processors::trackSensorIntercept(track, sensor, tx, ty, tz);
+      // Marco Edit
+      Processors::trackError(track, tz, ex, ey);
+      _posErrorX.at(nsensor)->Fill(ex);
+      _posErrorY.at(nsensor)->Fill(ey);
       //std::cout << "    EFFTrack_to_sensor x: " << (tx - sensor->getOffX()) << " y: " << (ty - sensor->getOffY()) << std::endl;      
       // Fill Track occupancy at DUT
       _trackOcc.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
-      //_trackRes.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
       //_trackResFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());      
       _trackRes.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
       _trackResFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
@@ -130,11 +136,23 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 
       for (unsigned int ncluster = 0; ncluster < plane->getNumClusters(); ncluster++){
 	Storage::Cluster* cluster = plane->getCluster(ncluster);	  
+	//Marco 2edit
 
+	// cout << "Clsuter pixx: " << cluster->getPixX() << endl;
+	// cout << "Clsuter pixy: " << cluster->getPixY() << endl;
+	// cout << "Clsuter posx: " << cluster->getPosX() << endl;
+	// cout << "Clsuter posy: " << cluster->getPosY() << endl;
+        Processors::trackClusterDistance( track, cluster, sensor, dx, dy, ex, ey);
+	 _dutTrackResX.at(nsensor)->Fill(dx);
+	 _dutTrackResY.at(nsensor)->Fill(dy);
+	
+	 _projXvsFN.at(nsensor)->Fill(dutEvent->getFrameNumber(),dx);
+	 _projYvsFN.at(nsensor)->Fill(dutEvent->getFrameNumber(),dy);
 	// hit residual 1 D
 	//_hitResidualNoCut.at(nsensor)->Fill(sqrt((tx - cluster->getPosX())*(tx - cluster->getPosX()) + (ty - cluster->getPosY())*(ty - cluster->getPosY())));  
 	_hitResidualxNoCut.at(nsensor)->Fill(tx - cluster->getPosX());
-	_hitResidualyNoCut.at(nsensor)->Fill(ty - cluster->getPosY());		
+	_hitResidualyNoCut.at(nsensor)->Fill(ty - cluster->getPosY());
+     
 	// Check if the cluster passes the cuts
 	bool cluster_pass = true;
 	for (unsigned int ncut = 0; ncut < _numClusterCuts; ncut++)
@@ -890,8 +908,8 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
 			      5*4*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());*/
    
     TH2D* trackResFine = new TH2D(name.str().c_str(), title.str().c_str(),
-			      800, -400.0, 400.0,
-			      800, -400.0, 400.0);
+				  800, -400.0, 400.0,
+				  800, -400.0, 400.0);
    
     trackResFine->SetDirectory(plotDir);
     _trackResFine.push_back(trackResFine);    
@@ -909,15 +927,104 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
 			      5*4*pixBinsX, -20.0*num_pixels*sensor->getPitchX(), 20.0*num_pixels*sensor->getPitchX(),
 			      5*4*pixBinsY, -20.0*num_pixels*sensor->getPitchY(), 20.0*num_pixels*sensor->getPitchY());*/
     TH2D* trackResHitFine = new TH2D(name.str().c_str(), title.str().c_str(),
-			      800, -400.0, 400.0,
-			      800, -400.0, 400.0);    
-
+				     800, -400.0, 400.0,
+				     800, -400.0, 400.0);
+   
     trackResHitFine->SetDirectory(plotDir);
     _trackResHitFine.push_back(trackResHitFine);  
 
 
+    // DUT track cluster residual
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "TrackClusterResidualX" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " x Track to hit residual"
+          << ";x DUT Hit [" << _dutDevice->getSpaceUnit() << "]" 
+          << ";Events";
+    TH1D* dutTrackResX = new TH1D(name.str().c_str(), title.str().c_str(),
+    			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+    
+    dutTrackResX->SetDirectory(plotDir);
+    _dutTrackResX.push_back(dutTrackResX);
 
-    ///====
+
+    // DUT track cluster residual
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "TrackClusterResidualY" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " x Track to hit residual"
+          << ";x DUT Hit [" << _dutDevice->getSpaceUnit() << "]" 
+          << ";Events";
+    TH1D* dutTrackResY = new TH1D(name.str().c_str(), title.str().c_str(),
+    			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+    
+    dutTrackResY->SetDirectory(plotDir);
+    _dutTrackResY.push_back(dutTrackResY);
+
+
+    // Residual X vs Framenumber
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "ResidualX vs Framenumber" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Residual X vs Framenumber "
+          << ";Framenumber" 
+          << ";X position [" << _dutDevice->getSpaceUnit() << "]"
+          << ";Tracks";
+    TH2D* projXvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+				  200000,0,200000,
+    			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+    
+    projXvsFN->SetDirectory(plotDir);
+    _projXvsFN.push_back(projXvsFN);
+
+
+    // Residual Y vs Framenumber
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+      <<  "ResidualY vs Framenumber" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Residual Y vs Framenumber "
+          << ";Framenumber" 
+          << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
+          << ";Tracks";
+    TH2D* projYvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+				  200000,0,200000,
+    			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+    
+    projYvsFN->SetDirectory(plotDir);
+    _projYvsFN.push_back(projYvsFN);
+
+ 
+    // Error Track Position
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "TrackPositionErrorX" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " x Hit Track Position Error "
+          << ";x DUT Hit [" << _dutDevice->getSpaceUnit() << "]" 
+          << ";Events";
+    TH1D* posErrorX = new TH1D(name.str().c_str(), title.str().c_str(),
+			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+
+    posErrorX->SetDirectory(plotDir);
+    _posErrorX.push_back(posErrorX);
+ 
+    // Error Track Position
+        name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "TrackPositionErrorY" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " x Hit Track Position Error "
+          << ";x DUT Hit [" << _dutDevice->getSpaceUnit() << "]" 
+          << ";Events";
+    TH1D* posErrorY = new TH1D(name.str().c_str(), title.str().c_str(),
+			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+
+    posErrorY->SetDirectory(plotDir);
+    _posErrorY.push_back(posErrorY);
 
 
     // Hit Residual

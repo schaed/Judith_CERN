@@ -872,11 +872,12 @@ void trackClusterDistance(const Storage::Track* track,
 void trackError(const Storage::Track* track, double z, double& errX, double& errY)
 {
   errX = sqrt(pow(track->getOriginErrX(), 2) +
-              pow(z, 2) * pow(track->getSlopeErrX(), 2) +
-              2 * z * track->getCovarianceX());
+               pow(z, 2) * pow(track->getSlopeErrX(), 2) +
+                2 * z * track->getCovarianceX());
   errY = sqrt(pow(track->getOriginErrY(), 2) +
               pow(z, 2) * pow(track->getSlopeErrY(), 2) +
               2 * z * track->getCovarianceY());
 }
+
 
 }
