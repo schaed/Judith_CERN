@@ -164,8 +164,14 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 	//std::cout << "     OUTSIDE HIT sensor: " << dutEvent->getFrameNumber() << " "
 	//<< dutEvent->getTimeStamp()
 	//<< " " << cluster->getValue() << std::endl;
-      // } 
-
+      // }
+      /*
+      std::cout << "cluster pix X: " << cluster->getPixX() << " Y: " <<  cluster->getPixY()
+		<< " PoxX: " <<  cluster->getPosX() << " PoxY: " <<  cluster->getPosY() << " Nhit: " << cluster->getNumHits() << std::endl;
+      for(unsigned s=0; s<cluster->getNumHits(); ++s)
+	std::cout << "    hit: " << s << " pixX: " << cluster->getPixX() << " Y: " <<  cluster->getPixY()
+		  << " PosX " <<  cluster->getHit(s)->getPosX() << " PoxY: " <<  cluster->getHit(s)->getPosY() << std::endl;
+      */
       //std::cout << "cluster->getNumHits(): " << cluster->getNumHits() <<std::endl;
       _trackResT0.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY(), cluster->getT0());
       _trackResClusterSize.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY(), float(cluster->getNumHits()));
