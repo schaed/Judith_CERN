@@ -1,10 +1,14 @@
 [Sensor 0]
-offset x   : 0.000000000
-offset y   : 0.000000000
+offset x   : -2.714746085
+offset y   : 1.439250866
 offset z   : 0.000000000
 rotation x : -0.261799388
 rotation y : 0.000000000
+<<<<<<< HEAD
 rotation z : 0.000000000
+=======
+rotation z : 0.002288714
+>>>>>>> b287a23fb8b47061c406b4960cf8c53ea6c84d6a
 frameNumberFunc x : 0
 frameNumberFunc y : 0
 timeStampFunc x : 0
@@ -12,8 +16,13 @@ timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 1]
+<<<<<<< HEAD
 offset x   : 2169.465801421
 offset y   : -530.297699450
+=======
+offset x   : 2170.001267896
+offset y   : -531.001063921
+>>>>>>> b287a23fb8b47061c406b4960cf8c53ea6c84d6a
 offset z   : 50000.000000000
 rotation x : 0.000000000
 rotation y : 0.000000000
@@ -25,12 +34,21 @@ timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 2]
+<<<<<<< HEAD
 offset x   : -266.170564548
 offset y   : 916.134412098
 offset z   : 100000.000000000
 rotation x : 0.261799388
 rotation y : 0.000000000
 rotation z : 0.000000000
+=======
+offset x   : -263.267580052
+offset y   : 913.525779568
+offset z   : 100000.000000000
+rotation x : 0.261799388
+rotation y : 0.000000000
+rotation z : 0.000780970
+>>>>>>> b287a23fb8b47061c406b4960cf8c53ea6c84d6a
 frameNumberFunc x : 0
 frameNumberFunc y : 0
 timeStampFunc x : 0
@@ -38,12 +56,21 @@ timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 3]
+<<<<<<< HEAD
 offset x   : -2465.250014615
 offset y   : -2069.804226779
 offset z   : 450000.000000000
 rotation x : -3.403392000
 rotation y : 0.000000000
 rotation z : -1.570796327
+=======
+offset x   : -2445.903397035
+offset y   : -2070.667378480
+offset z   : 450000.000000000
+rotation x : -3.403392000
+rotation y : 0.000000000
+rotation z : -1.569020835
+>>>>>>> b287a23fb8b47061c406b4960cf8c53ea6c84d6a
 frameNumberFunc x : 0
 frameNumberFunc y : 0
 timeStampFunc x : 0
@@ -51,12 +78,20 @@ timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 4]
+<<<<<<< HEAD
 offset x   : -1787.065506246
+=======
+offset x   : -1789.994945125
+>>>>>>> b287a23fb8b47061c406b4960cf8c53ea6c84d6a
 offset y   : -4023.602906733
 offset z   : 500000.000000000
 rotation x : -3.141592654
 rotation y : 0.000000000
+<<<<<<< HEAD
 rotation z : 0.000000000
+=======
+rotation z : -0.007035770
+>>>>>>> b287a23fb8b47061c406b4960cf8c53ea6c84d6a
 frameNumberFunc x : 0
 frameNumberFunc y : 0
 timeStampFunc x : 0
@@ -64,7 +99,7 @@ timeStampFunc y : 0
 [End Sensor]
 
 [Device]
-slope x    : 0.000000000
-slope y    : 0.000000000
+slope x    : -0.000035425
+slope y    : -0.000149035
 [End Device]
 

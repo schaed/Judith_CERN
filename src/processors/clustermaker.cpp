@@ -93,6 +93,8 @@ void ClusterMaker::calculateCluster(Storage::Cluster* cluster)
     const double value = (hit->getValue() > 0) ? hit->getValue() : 1;
     cogX += hit->getPixX() * value;
     cogY += hit->getPixY() * value;
+    // std::cout <<"Cluster PixX: " <<  hit->getPixX() << std::endl;
+    // std::cout <<"Cluster PixY: " << hit->getPixY() << std::endl;
     //added matevz 20141130
     //weight += hit->getValue();
     weight += value;

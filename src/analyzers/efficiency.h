@@ -1,3 +1,4 @@
+
 #ifndef EFFICIENCY_H
 #define EFFICIENCY_H
 
@@ -41,7 +42,13 @@ private:
   std::vector<TH2D*> _trackResHitFine;  
   std::vector<TH2D*> _trackResEff;
   std::vector<TH2D*> _trackResEffFine;  
-
+  
+  std::vector<TH2D*> _projXvsFN;
+  std::vector<TH2D*> _projYvsFN;
+  std::vector<TH1D*> _dutTrackResX;
+  std::vector<TH1D*> _dutTrackResY;
+  std::vector<TH1D*> _posErrorX;
+  std::vector<TH1D*> _posErrorY;
   std::vector<TH1D*> _hitResidualxNoCut;
   std::vector<TH1D*> _hitResidualxCut;
   std::vector<TH1D*> _hitResidualyNoCut;

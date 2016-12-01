@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 #include <TFile.h>
 #include <TDirectory.h>
@@ -93,7 +94,8 @@ Event* StorageIO::readEvent(Long64_t n)
         cluster->setTrack(track);
       }
     }
-    //if(numHits) cout << "numHits " << numHits <<endl;
+    // if(numHits) cout << "numHits " << numHits <<endl;
+
     // Kill if there are no hits for Tower Jazz, only for 1 plane dut
     if(bHitIsHit && bHitValidFit && numHits==0 && _numPlanes==1) event->setInvalid(true);
     
@@ -140,6 +142,7 @@ Event* StorageIO::readEvent(Long64_t n)
 	//bool requireAmpHit=false;
 	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && (hitValue[nhit]>0.003 && hitT0[nhit]>80.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.5 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.6))requireAmpHit=true;
 	//if(!requireAmpHit) continue;
+	//cout << nhit << "   " << "   " << hitPixX[nhit] << "   " <<hitPixY[nhit] << endl;
       }
       //if(_numPlanes==1) std::cout << "   pass " << nhit << " charge: " << hitValue[nhit] << " " <<  hitLowFreqFFT[nhit]
       //		  << " " << hitT0[nhit] << " " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
@@ -618,4 +621,5 @@ StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes
       }
   }
   
+
 }
