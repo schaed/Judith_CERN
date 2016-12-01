@@ -2,45 +2,65 @@
 offset x   : 0.000000000
 offset y   : 0.000000000
 offset z   : 0.000000000
-rotation x : 0.000000000
+rotation x : -0.261799388
 rotation y : 0.000000000
 rotation z : 0.000000000
+frameNumberFunc x : 0
+frameNumberFunc y : 0
+timeStampFunc x : 0
+timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 1]
-offset x   : 2343.924993665
-offset y   : -611.700807965
+offset x   : 2169.465801421
+offset y   : -530.297699450
 offset z   : 50000.000000000
 rotation x : 0.000000000
 rotation y : 0.000000000
 rotation z : -1.570796327
+frameNumberFunc x : 0
+frameNumberFunc y : 0
+timeStampFunc x : 0
+timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 2]
-offset x   : 180.613869147
-offset y   : 955.547717505
+offset x   : -266.170564548
+offset y   : 916.134412098
 offset z   : 100000.000000000
-rotation x : 0.000000000
+rotation x : 0.261799388
 rotation y : 0.000000000
 rotation z : 0.000000000
+frameNumberFunc x : 0
+frameNumberFunc y : 0
+timeStampFunc x : 0
+timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 3]
-offset x   : 216.380401577
-offset y   : -2037.675661517
+offset x   : -2465.250014615
+offset y   : -2069.804226779
 offset z   : 450000.000000000
-rotation x : -3.141592654
+rotation x : -3.403392000
 rotation y : 0.000000000
 rotation z : -1.570796327
+frameNumberFunc x : 0
+frameNumberFunc y : 0
+timeStampFunc x : 0
+timeStampFunc y : 0
 [End Sensor]
 
 [Sensor 4]
-offset x   : 641.684677318
-offset y   : -1580.458445428
-offset z   : 550000.000000000
+offset x   : -1787.065506246
+offset y   : -4023.602906733
+offset z   : 500000.000000000
 rotation x : -3.141592654
 rotation y : 0.000000000
-rotation z : -1.570796327
+rotation z : 0.000000000
+frameNumberFunc x : 0
+frameNumberFunc y : 0
+timeStampFunc x : 0
+timeStampFunc y : 0
 [End Sensor]
 
 [Device]

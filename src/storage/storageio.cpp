@@ -79,6 +79,7 @@ Event* StorageIO::readEvent(Long64_t n)
     for (int ncluster = 0; ncluster < numClusters; ncluster++)
     {
       Cluster* cluster = event->newCluster(nplane);
+      //if(_numPlanes==1) std::cout << "clusterPixX[ncluster]" << clusterPixX[ncluster] << std::endl;
       cluster->setPix(clusterPixX[ncluster], clusterPixY[ncluster]);
       cluster->setPixErr(clusterPixErrX[ncluster], clusterPixErrY[ncluster]);
       cluster->setPos(clusterPosX[ncluster], clusterPosY[ncluster], clusterPosZ[ncluster]);
@@ -120,12 +121,21 @@ Event* StorageIO::readEvent(Long64_t n)
       //				        << " " << hitT0[nhit] << " " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit]
       //				       << " " <<  hitTiming[nhit] << std::endl;      
       //if (nhit<4.5) continue;
-      if(numHits>10 && _numPlanes==1){
-	if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>25.0 && hitT0[nhit]<230.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<250.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]>1.9)){ continue; }
+      if(numHits>9 && _numPlanes==1){
+	//std::cout << "cutting" << std::endl;
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !((hitValue[nhit]>0.005 && hitT0[nhit]>25.0 && hitT0[nhit]<300.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<50.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]>2.9)||(hitValue[nhit]>0.02 && hitT0[nhit]>25.0 && hitT0[nhit]<400.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<500.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]<1.9&& hitLowFreqFFT[nhit]>0.1))){ continue; } // run 33043
+
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !((hitValue[nhit]>0.005 && hitT0[nhit]>25.0 && hitT0[nhit]<300.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<250.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]>2.9)||(hitValue[nhit]>0.02 && hitT0[nhit]>25.0 && hitT0[nhit]<400.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<500.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]<1.9&& hitLowFreqFFT[nhit]>0.1))){ continue; } // run 33043
+
+	if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !((hitValue[nhit]>0.004 && hitT0[nhit]>60.0 && hitT0[nhit]<220.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<300.0 && fabs(hitLowFreqFFTPhase[nhit])>0.2 && hitLowFreqFFT[nhit]>2.9)||(hitValue[nhit]>0.025 && hitT0[nhit]>80.0 && hitT0[nhit]<400.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<500.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]<2.9&& hitLowFreqFFT[nhit]>0.1))){ continue; } // run 33043		
+
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !((hitValue[nhit]>0.005 && hitT0[nhit]>100.0 && hitT0[nhit]<300.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<250.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]>1.9)||(hitValue[nhit]>0.04 && hitT0[nhit]>90.0 && hitT0[nhit]<400.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<500.0 && fabs(hitLowFreqFFTPhase[nhit])>0.4 && hitLowFreqFFT[nhit]<1.9&& hitLowFreqFFT[nhit]>0.1))){ continue; } // run 33043	
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !((hitValue[nhit]>0.0002 && hitT0[nhit]>40.0 && hitT0[nhit]<230.0 && hitTiming[nhit]>0.01 && hitTiming[nhit]<250.0 && fabs(hitLowFreqFFTPhase[nhit])>-10.0 && hitLowFreqFFT[nhit]>0.2))){ continue; } // RUN 32878
+	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !((hitValue[nhit]>0.002 && hitT0[nhit]>40.0 && hitT0[nhit]<230.0 && hitTiming[nhit]>2.0 && hitTiming[nhit]<200.0 && fabs(hitLowFreqFFTPhase[nhit])>0.0 && hitLowFreqFFT[nhit]>1.0))){ continue; } // RUN 33072		
 	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.01 && hitT0[nhit]>50.0 && hitT0[nhit]<110.0 && hitTiming[nhit]>0.3 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>1.2)){ continue; }
 	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.01 && hitT0[nhit]>50.0 && hitT0[nhit]<110.0 && hitTiming[nhit]>0.3 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>0.2)){ continue; }		
 	else if(nhit>3.5) continue;
-	//else if(nhit>3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>100.0 && hitT0[nhit]<150.0 && hitTiming[nhit]>0.1 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>0.05)) continue;
+	//else if(nhit>3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && !(hitValue[nhit]>0.001 && hitT0[nhit]>100.0 && hitT0[nhit]<150.0 && hitTiming[nhit]>2.0 && hitTiming[nhit]<50.0 && hitLowFreqFFTPhase[nhit]>0.0 && hitLowFreqFFT[nhit]>0.1)) continue;
 
 	//bool requireAmpHit=false;
 	//if(nhit<3.5 && _numPlanes==1 && bHitIsHit && bHitValidFit && (hitValue[nhit]>0.003 && hitT0[nhit]>80.0 && hitT0[nhit]<420.0 && hitTiming[nhit]>0.5 && hitTiming[nhit]<300.0 && hitLowFreqFFTPhase[nhit]>-10.0 && hitLowFreqFFT[nhit]>0.6))requireAmpHit=true;
@@ -134,7 +144,17 @@ Event* StorageIO::readEvent(Long64_t n)
       //if(_numPlanes==1) std::cout << "   pass " << nhit << " charge: " << hitValue[nhit] << " " <<  hitLowFreqFFT[nhit]
       //		  << " " << hitT0[nhit] << " " << hitIsHit[nhit] << " vf: " << hitValidFit[nhit] << std::endl;
       Hit* hit = event->newHit(nplane);
-      hit->setPix(hitPixX[nhit], hitPixY[nhit]);
+      if(numHits>9 && _numPlanes==1){
+	if(nhit==0) hit->setPix(-2, 0);
+	else if(nhit==1) hit->setPix(-2, -1);	
+	else if(nhit==2) hit->setPix(-1,0);	
+	else if(nhit==3) hit->setPix(-1,-1);	
+	else hit->setPix(hitPixX[nhit], hitPixY[nhit]);	
+	//std::cout << "   nhit: " << nhit << " pixX: " << hitPixX[nhit]
+	//	  << " pixY: " << hitPixY[nhit] << std::endl;
+      }
+      else
+	hit->setPix(hitPixX[nhit], hitPixY[nhit]);
       hit->setPos(hitPosX[nhit], hitPosY[nhit], hitPosZ[nhit]);
       hit->setT0(hitT0[nhit]);
       if(hitValueType==kInt)      
