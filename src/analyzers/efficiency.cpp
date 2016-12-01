@@ -212,6 +212,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
       } // end cluster loop
 
       // Print missing hits
+      /*
       if(!isInsideHit){
 	if((tx - sensor->getOffX())>-100.0 && (tx - sensor->getOffX())<-70.0
 	   && (ty - sensor->getOffY())>-20.0 && (ty - sensor->getOffY())<10.0){
@@ -220,7 +221,7 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 	  << std::endl;
 	}
       }
-
+      */
       //if((tx - sensor->getOffX())>105.0 && (tx - sensor->getOffX())<115.0
       // && (ty - sensor->getOffY())>-15.0 && (ty - sensor->getOffY())<-5.0)
       //hhit->processEvent(dutEvent);
@@ -973,15 +974,15 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
     // Residual X vs Framenumber
     name.str(""); title.str("");
     name << sensor->getDevice()->getName() << sensor->getName()
-         <<  "ResidualX vs Framenumber" << _nameSuffix;
+         <<  "ResidualX_vs_Framenumber" << _nameSuffix;
     title << sensor->getDevice()->getName() << " " << sensor->getName()
           << " Residual X vs Framenumber "
           << ";Framenumber" 
           << ";X position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* projXvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
-				  200000,0,200000,
-    			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+			       10000,0,200000,
+			       2.0*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
     
     projXvsFN->SetDirectory(plotDir);
     _projXvsFN.push_back(projXvsFN);
@@ -990,15 +991,15 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
     // Residual Y vs Framenumber
     name.str(""); title.str("");
     name << sensor->getDevice()->getName() << sensor->getName()
-      <<  "ResidualY vs Framenumber" << _nameSuffix;
+      <<  "ResidualY_vs_Framenumber" << _nameSuffix;
     title << sensor->getDevice()->getName() << " " << sensor->getName()
           << " Residual Y vs Framenumber "
           << ";Framenumber" 
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* projYvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
-				  200000,0,200000,
-    			      4*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
+			       10000,0,200000,
+			       2*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());
     
     projYvsFN->SetDirectory(plotDir);
     _projYvsFN.push_back(projYvsFN);
