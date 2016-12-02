@@ -69,8 +69,8 @@ void DUTResiduals::processEvent(const Storage::Event* refEvent,
         _residualsX.at(nplane)->Fill(rx);
         _residualsY.at(nplane)->Fill(ry);
 	
-        _residualsFrameX.at(nplane)->Fill(sensor->getFrameNumber(), rx);
-        _residualsFrameY.at(nplane)->Fill(sensor->getFrameNumber(), ry);
+        if(_residualsFrameX.at(nplane)) _residualsFrameX.at(nplane)->Fill(sensor->getFrameNumber(), rx);
+        if(_residualsFrameY.at(nplane)) _residualsFrameY.at(nplane)->Fill(sensor->getFrameNumber(), ry);
 	
 	_totResidual.at(nplane)+=sqrt(rx*rx+ry*ry);
         _residualsXX.at(nplane)->Fill(rx, tx);
@@ -198,11 +198,14 @@ DUTResiduals::DUTResiduals(const Mechanics::Device* refDevice,
           << ";Framenumber" 
           << ";"<<  ((axis) ? " X" : " Y") <<" position [" << refDevice->getSpaceUnit() << "]"
           << ";Tracks";
-    TH2D* projvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+    TH2D* projvsFN =NULL;
+    /*
+     projvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
 			       250,0,400000,
 			       nbins*4, -width * 2.0, width * 2.0);
     
     projvsFN->SetDirectory(dir2d);
+    */
     if (axis) _residualsFrameX.push_back(projvsFN);
     else _residualsFrameY.push_back(projvsFN);
 

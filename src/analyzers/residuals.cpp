@@ -83,8 +83,8 @@ void Residuals::processEvent(const Storage::Event* refEvent)
         _residualsXY.at(nplane)->Fill(rx, ty);
         _residualsYX.at(nplane)->Fill(ry, tx);
 
-        _residualsFrameX.at(nplane)->Fill(sensor->getFrameNumber(), rx);
-        _residualsFrameY.at(nplane)->Fill(sensor->getFrameNumber(), ry);
+        if(_residualsFrameX.size()>(nplane-1) && _residualsFrameX.at(nplane)) _residualsFrameX.at(nplane)->Fill(sensor->getFrameNumber(), rx);
+        if(_residualsFrameY.size()>(nplane-1) && _residualsFrameY.at(nplane)) _residualsFrameY.at(nplane)->Fill(sensor->getFrameNumber(), ry);
 
 	_clusterOcc.at(nplane)->Fill(cluster->getPosX(), cluster->getPosY());
 	_residualsXclustersize.at(nplane)->Fill(cluster->getNumHits(), rx);
@@ -202,11 +202,14 @@ Residuals::Residuals(const Mechanics::Device* refDevice,
           << ";Framenumber" 
           << ";X position [" << refDevice->getSpaceUnit() << "]"
           << ";Tracks";
-    TH2D* projXvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+    TH2D* projXvsFN = NULL;
+    /*
+    projXvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
 			       250,0,400000,
 			       2.0*nPixX*binsPerPix, -2.0*nPixX*sensor->getPitchX(), 2.0*nPixX*sensor->getPitchX());
+			       projXvsFN->SetDirectory(dir2d);
+    */
     
-    projXvsFN->SetDirectory(dir2d);
     _residualsFrameX.push_back(projXvsFN);
 
     // Residual Y vs Framenumber
@@ -218,11 +221,15 @@ Residuals::Residuals(const Mechanics::Device* refDevice,
           << ";Framenumber" 
           << ";Y position [" << refDevice->getSpaceUnit() << "]"
           << ";Tracks";
-    TH2D* projYvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+    TH2D* projYvsFN = NULL;
+    /*
+    projYvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
 			       250,0,400000,
 			       2.0*binsY*binsPerPix, -2.0*binsY*sensor->getPitchX(), 2.0*binsY*sensor->getPitchX());
+			       projYvsFN->SetDirectory(dir2d);
+    */
     
-    projYvsFN->SetDirectory(dir2d);
+    
     _residualsFrameY.push_back(projYvsFN);    
 
     for (unsigned int axis = 0; axis < 3; axis++)
