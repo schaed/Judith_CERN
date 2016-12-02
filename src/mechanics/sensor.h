@@ -64,18 +64,22 @@ public:
   void setRotZ(double rotation);
   void setFrameNumberFuncX(std::string a) {
     m_frameFuncX = a;
+    if(f_frameFuncX) delete f_frameFuncX;
     f_frameFuncX = new TF1("xpos",m_frameFuncX.c_str());
   }
   void setFrameNumberFuncY(std::string a) {
     m_frameFuncY = a;
+    if(f_frameFuncY) delete f_frameFuncY;
     f_frameFuncY = new TF1("ypos",m_frameFuncY.c_str());
   }
   void setTimeStampFuncX(std::string a) {
     m_timeStampFuncX = a;
+    if(f_timeStampFuncX) delete f_timeStampFuncX;
     f_timeStampFuncX = new TF1("xtpos",m_timeStampFuncX.c_str());
   }
   void setTimeStampFuncY(std::string a) {
     m_timeStampFuncY = a;
+    if(f_timeStampFuncY) delete f_timeStampFuncY;    
     f_timeStampFuncY = new TF1("ytpos",m_timeStampFuncY.c_str());
   }
 

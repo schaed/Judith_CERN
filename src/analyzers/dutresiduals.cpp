@@ -199,13 +199,11 @@ DUTResiduals::DUTResiduals(const Mechanics::Device* refDevice,
           << ";"<<  ((axis) ? " X" : " Y") <<" position [" << refDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* projvsFN =NULL;
-    /*
      projvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
 			       250,0,400000,
 			       nbins*4, -width * 2.0, width * 2.0);
     
     projvsFN->SetDirectory(dir2d);
-    */
     if (axis) _residualsFrameX.push_back(projvsFN);
     else _residualsFrameY.push_back(projvsFN);
 

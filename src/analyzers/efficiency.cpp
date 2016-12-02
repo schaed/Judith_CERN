@@ -168,8 +168,8 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
 	//_trackResHitFine.at(nsensor)->Fill(tx - cluster->getPosX(), ty - cluster->getPosY());	
 	_trackResHit.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());
 	_trackResHitFine.at(nsensor)->Fill(tx - sensor->getOffX(), ty - sensor->getOffY());	
-      if((tx - sensor->getOffX())>-100.0 && (tx - sensor->getOffX())<-70.0
-	  && (ty - sensor->getOffY())>-20.0 && (ty - sensor->getOffY())<10.0){
+      if((tx - sensor->getOffX())>-80.0 && (tx - sensor->getOffX())<-70.0
+	  && (ty - sensor->getOffY())>-40.0 && (ty - sensor->getOffY())<-30.0){
 	// && (ty - sensor->getOffY())>130.0 && (ty - sensor->getOffY())<200.0){
 	//std::cout << "     HIT sensor: " << dutEvent->getFrameNumber() << " "
 	//	    << dutEvent->getTimeStamp()
@@ -212,16 +212,16 @@ void Efficiency::processEvent(const Storage::Event* refEvent,
       } // end cluster loop
 
       // Print missing hits
-      /*
+      
       if(!isInsideHit){
-	if((tx - sensor->getOffX())>-100.0 && (tx - sensor->getOffX())<-70.0
-	   && (ty - sensor->getOffY())>-20.0 && (ty - sensor->getOffY())<10.0){
+	if((tx - sensor->getOffX())>-80.0 && (tx - sensor->getOffX())<-70.0
+	   && (ty - sensor->getOffY())>-40.0 && (ty - sensor->getOffY())<-30.0){
 	  std::cout << "inside sensor: " << dutEvent->getFrameNumber()
 	  << " " << dutEvent->getTimeStamp()
 	  << std::endl;
 	}
       }
-      */
+      
       //if((tx - sensor->getOffX())>105.0 && (tx - sensor->getOffX())<115.0
       // && (ty - sensor->getOffY())>-15.0 && (ty - sensor->getOffY())<-5.0)
       //hhit->processEvent(dutEvent);

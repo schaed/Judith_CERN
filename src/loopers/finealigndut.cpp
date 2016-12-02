@@ -120,6 +120,7 @@ void FineAlignDut::loop()
 	      _clusterMaker->generateClusters(dutEvent, nplane);
 
 	    // apply the existing position corrections
+	    
 	    for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); ++nsens){
 	      Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);
 	      sensor->setFrameNumber(refEvent->getFrameNumber());

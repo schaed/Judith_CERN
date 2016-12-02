@@ -203,13 +203,10 @@ Residuals::Residuals(const Mechanics::Device* refDevice,
           << ";X position [" << refDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* projXvsFN = NULL;
-    /*
     projXvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
 			       250,0,400000,
 			       2.0*nPixX*binsPerPix, -2.0*nPixX*sensor->getPitchX(), 2.0*nPixX*sensor->getPitchX());
 			       projXvsFN->SetDirectory(dir2d);
-    */
-    
     _residualsFrameX.push_back(projXvsFN);
 
     // Residual Y vs Framenumber
@@ -222,14 +219,10 @@ Residuals::Residuals(const Mechanics::Device* refDevice,
           << ";Y position [" << refDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* projYvsFN = NULL;
-    /*
     projYvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
 			       250,0,400000,
 			       2.0*binsY*binsPerPix, -2.0*binsY*sensor->getPitchX(), 2.0*binsY*sensor->getPitchX());
 			       projYvsFN->SetDirectory(dir2d);
-    */
-    
-    
     _residualsFrameY.push_back(projYvsFN);    
 
     for (unsigned int axis = 0; axis < 3; axis++)
