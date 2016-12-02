@@ -1,0 +1,18 @@
+[Sensor 0]
+offset x   : -1590.007798425
+offset y   : -591.882485556
+offset z   : 270000.000000000
+rotation x : 0.000000000
+rotation y : 0.000000000
+rotation z : 0.000000000
+frameNumberFunc x : 115.903-0.000934546*x+3.1983e-08*x*x-4.29801e-13*x*x*x+2.35395e-18*x*x*x*x-4.4838e-24*x*x*x*x*x
+frameNumberFunc y : 8.08761+0.000567591*x-1.16389e-08*x*x+5.88429e-14*x*x*x-6.32418e-20*x*x*x*x-1.43187e-25*x*x*x*x*x
+timeStampFunc x : 0.0
+timeStampFunc y : 0.0
+[End Sensor]
+
+[Device]
+slope x    : 0.000000000
+slope y    : 0.000000000
+[End Device]
+
