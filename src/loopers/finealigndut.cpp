@@ -131,10 +131,13 @@ void FineAlignDut::loop()
 		sensor->setTimeStampFuncX("0.0");
 		sensor->setTimeStampFuncY("0.0");
 	      }
-	      tmp_funcX.push_back(sensor->getFrameNumberFuncX());
-	      tmp_funcY.push_back(sensor->getFrameNumberFuncY());
-	      tmp_funcTimeX.push_back(sensor->timeStampFuncX());
-	      tmp_funcTimeY.push_back(sensor->timeStampFuncY());		
+	      // save the alignment dependency for each sensor. Only want to fill for the first event
+	      if(nevent==_startEvent){
+		tmp_funcX.push_back(sensor->getFrameNumberFuncX());
+		tmp_funcY.push_back(sensor->getFrameNumberFuncY());
+		tmp_funcTimeX.push_back(sensor->timeStampFuncX());
+		tmp_funcTimeY.push_back(sensor->timeStampFuncY());
+	      }
 	    }
 	    
 	    Processors::applyAlignment(refEvent, _refDevice);
