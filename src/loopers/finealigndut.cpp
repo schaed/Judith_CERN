@@ -165,7 +165,7 @@ void FineAlignDut::loop()
 	if(my_evt_res<ndiv){
 	  v_timeStamp.at(end_residual)*=double(ndiv)/double(my_evt_res);
 	}
-	
+
 	std::vector<TH1D*> x_hists,y_hists;
 	for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); ++nsens)
 	  {
@@ -202,6 +202,20 @@ void FineAlignDut::loop()
 	    }
 	    x_hists.clear();
 	    y_hists.clear();
+
+	    // Framenumber
+	    //residuals
+	    /*
+	    for (unsigned int nsens = 0; nsens < _dutDevice->getNumSensors(); ++nsens)
+	      {
+		std::cout << "sensors: " << nsens << " out of " << _dutDevice->getNumSensors() << std::endl;
+		Mechanics::Sensor* sensor = _dutDevice->getSensor(nsens);
+		TH2D* hrestmp = residuals.getResidualFrameX(nsens);
+		Processors::fitPosition(hrestmp,_displayFits);
+		TH2D* hrestmpy = residuals.getResidualFrameY(nsens);
+		Processors::fitPosition(hrestmpy,_displayFits);		
+	      }
+	    */
 	    //std::cout << "end fit pos " << std::endl;
 	    //double offsetX = 0, offsetY = 0, rotation = 0;
 	    /*

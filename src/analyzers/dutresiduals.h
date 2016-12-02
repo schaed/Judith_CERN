@@ -24,6 +24,8 @@ private:
   std::vector<TH2D*> _residualsYY;
   std::vector<TH2D*> _residualsYX;
   std::vector<double> _totResidual;
+  std::vector<TH2D*> _residualsFrameX;
+  std::vector<TH2D*> _residualsFrameY;
   
 public:
   DUTResiduals(const Mechanics::Device* refDevice,
@@ -43,7 +45,8 @@ public:
 
   TH1D* getResidualX(unsigned int nsensor);
   TH1D* getResidualY(unsigned int nsensor);  
-  
+  TH2D* getResidualFrameX(unsigned int nsensor);  
+  TH2D* getResidualFrameY(unsigned int nsensor);    
   TH2D* getResidualXX(unsigned int nsensor);
   TH2D* getResidualXY(unsigned int nsensor);
   TH2D* getResidualYY(unsigned int nsensor);

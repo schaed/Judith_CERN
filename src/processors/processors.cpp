@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <vector>
 
+#include <TObjArray.h>
 #include <TH2D.h>
 #include <TH1D.h>
 #include <TF1.h>
@@ -94,6 +95,51 @@ void fitGaussian(
   fitGaussian(hist, mean, sigma, max, background, display);
 }
 
+std::string fitPosition(TH2D* hist,bool display)			  
+{
+  TCanvas* can = new TCanvas();
+  hist->Draw("colz");
+  can->Update();
+  can->WaitPrimitive();
+  unsigned color=0;
+
+  TObjArray *myarr = new TObjArray();
+  hist->FitSlicesY(0,0,-1,0,"QNR",myarr);
+  TH1D* myhist = static_cast<TH1D*>(myarr->At(0));
+
+  TF1* fit = new TF1("fit1", "pol5");
+  myhist->Fit("fit1");
+
+  if (display)
+  {
+    myhist->GetXaxis()->SetTitle("Frame Number");
+    myhist->GetYaxis()->SetTitle("Position in #mu m");
+    myhist->SetLineColor(46);
+    myhist->SetLineWidth(1);
+    myhist->Draw();
+    can->Update();
+    can->WaitPrimitive();
+  }
+  
+  // NOTE this needs to be changed for other functions
+  std::stringstream output;
+  std::string xvar = "";
+  for(unsigned it=0; it<fit->GetNpar(); ++it){
+    output << xvar;
+    if(xvar!="") output << "*";
+    output <<fit->GetParameter(it);
+    if(it<(fit->GetNpar()-1)) output << "+";
+    std::cout << "par: " << it << " " << fit->GetParameter(it) << std::endl;
+    if(xvar!="") xvar+="*x";
+    else xvar+="x";
+  }
+  std::cout << output.str() << std::endl;
+  delete myhist;
+  delete can;
+  return output.str();
+}
+  
+
   std::string fitPosition(std::vector<TH1D*> hist,
 			  unsigned nevt_per_point,
 			  bool display, bool fitGaus)
@@ -162,6 +208,7 @@ void fitGaussian(
   }
   std::cout << output.str() << std::endl;
   delete hpos;
+  delete can;
   return output.str();
 }
 
@@ -227,13 +274,12 @@ void fitGaussian(
     {
       hpos->GetXaxis()->SetTitle("Time Stamp");
       hpos->GetYaxis()->SetTitle("Position in #mu m");
-      TCanvas* can = new TCanvas();
       hpos->SetLineColor(1);
       hpos->SetLineWidth(1);    
       hpos->Draw();
       can->Update();
       can->WaitPrimitive();
-      delete can;
+      //delete can;
     }
   
   std::stringstream output;
@@ -249,6 +295,7 @@ void fitGaussian(
   }
   std::cout << output.str() << std::endl;
   delete hpos;
+  delete can;
   return output.str();
 }
   

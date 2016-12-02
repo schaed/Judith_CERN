@@ -68,6 +68,10 @@ void DUTResiduals::processEvent(const Storage::Event* refEvent,
         const double ry = ty - cluster->getPosY();
         _residualsX.at(nplane)->Fill(rx);
         _residualsY.at(nplane)->Fill(ry);
+	
+        _residualsFrameX.at(nplane)->Fill(sensor->getFrameNumber(), rx);
+        _residualsFrameY.at(nplane)->Fill(sensor->getFrameNumber(), ry);
+	
 	_totResidual.at(nplane)+=sqrt(rx*rx+ry*ry);
         _residualsXX.at(nplane)->Fill(rx, tx);
         _residualsYY.at(nplane)->Fill(ry, ty);
@@ -90,7 +94,19 @@ TH1D* DUTResiduals::getResidualY(unsigned int nsensor)
 {
   validDutSensor(nsensor);
   return _residualsY.at(nsensor);
-}  
+}
+
+TH2D* DUTResiduals::getResidualFrameX(unsigned int nsensor)
+{
+  validDutSensor(nsensor);
+  return _residualsFrameX.at(nsensor);
+}
+  
+TH2D* DUTResiduals::getResidualFrameY(unsigned int nsensor)
+{
+  validDutSensor(nsensor);
+  return _residualsFrameY.at(nsensor);
+}
   
 TH2D* DUTResiduals::getResidualXX(unsigned int nsensor)
 {
@@ -171,6 +187,24 @@ DUTResiduals::DUTResiduals(const Mechanics::Device* refDevice,
       res1d->GetXaxis()->SetTitle(xAxisTitle.str().c_str());
       if (axis) _residualsX.push_back(res1d);
       else      _residualsY.push_back(res1d);
+
+
+    // Residual X vs Framenumber
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "Residual"<<  ((axis) ? " X" : " Y") <<"_vs_Framenumber" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Residual " <<  ((axis) ? " X" : " Y") <<" vs Framenumber "
+          << ";Framenumber" 
+          << ";"<<  ((axis) ? " X" : " Y") <<" position [" << refDevice->getSpaceUnit() << "]"
+          << ";Tracks";
+    TH2D* projvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+			       250,0,400000,
+			       nbins*4, -width * 2.0, width * 2.0);
+    
+    projvsFN->SetDirectory(dir2d);
+    if (axis) _residualsFrameX.push_back(projvsFN);
+    else _residualsFrameY.push_back(projvsFN);
 
       // Generate the XX or YY residual distribution
 

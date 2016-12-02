@@ -18,16 +18,18 @@ class Residuals : public SingleAnalyzer
 {
 private:
   std::vector<TH1D*> _residualsX;
-  std::vector<TH1D*> _residualsY;  
+  std::vector<TH1D*> _residualsY;
   std::vector<TH1D*> _residualsZ;
   std::vector<TH2D*> _residualsRR;
-  std::vector<TH2D*> _clusterOcc;    
+  std::vector<TH2D*> _clusterOcc;
   std::vector<TH2D*> _residualsXX;
   std::vector<TH2D*> _residualsXY;
   std::vector<TH2D*> _residualsYY;
   std::vector<TH2D*> _residualsYX;
   std::vector<TH2D*> _residualsXclustersize;
-  std::vector<TH2D*> _residualsYclustersize;    
+  std::vector<TH2D*> _residualsYclustersize;
+  std::vector<TH2D*> _residualsFrameX;
+  std::vector<TH2D*> _residualsFrameY;
 
   double _totResidual;
 
@@ -44,6 +46,8 @@ public:
   void postProcessing();
 
   double GetTotalResidual() {return _totResidual;}
+  TH2D* getResidualFrameX(unsigned int nsensor);  
+  TH2D* getResidualFrameY(unsigned int nsensor);  
   TH2D* getResidualXX(unsigned int nsensor);
   TH2D* getResidualXY(unsigned int nsensor);
   TH2D* getResidualYY(unsigned int nsensor);

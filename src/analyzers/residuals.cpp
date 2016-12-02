@@ -82,6 +82,10 @@ void Residuals::processEvent(const Storage::Event* refEvent)
         _residualsYY.at(nplane)->Fill(ry, ty);
         _residualsXY.at(nplane)->Fill(rx, ty);
         _residualsYX.at(nplane)->Fill(ry, tx);
+
+        _residualsFrameX.at(nplane)->Fill(sensor->getFrameNumber(), rx);
+        _residualsFrameY.at(nplane)->Fill(sensor->getFrameNumber(), ry);
+
 	_clusterOcc.at(nplane)->Fill(cluster->getPosX(), cluster->getPosY());
 	_residualsXclustersize.at(nplane)->Fill(cluster->getNumHits(), rx);
 	_residualsYclustersize.at(nplane)->Fill(cluster->getNumHits(), ry);
@@ -92,6 +96,18 @@ void Residuals::processEvent(const Storage::Event* refEvent)
 
 void Residuals::postProcessing() { } // Needs to be declared even if not used
 
+TH2D* Residuals::getResidualFrameX(unsigned int nsensor)
+{
+  validSensor(nsensor);
+  return _residualsFrameX.at(nsensor);
+}
+  
+TH2D* Residuals::getResidualFrameY(unsigned int nsensor)
+{
+  validSensor(nsensor);
+  return _residualsFrameY.at(nsensor);
+}
+  
 TH2D* Residuals::getResidualXX(unsigned int nsensor)
 {
   validSensor(nsensor);
@@ -176,7 +192,39 @@ Residuals::Residuals(const Mechanics::Device* refDevice,
                                sensor->getPosNumY(), lowY, uppY);
     histClust->SetDirectory(dir2d);
     _clusterOcc.push_back(histClust);    
+
+    // Residual X vs Framenumber
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "ResidualX_vs_Framenumber" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Residual X vs Framenumber "
+          << ";Framenumber" 
+          << ";X position [" << refDevice->getSpaceUnit() << "]"
+          << ";Tracks";
+    TH2D* projXvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+			       250,0,400000,
+			       2.0*nPixX*binsPerPix, -2.0*nPixX*sensor->getPitchX(), 2.0*nPixX*sensor->getPitchX());
     
+    projXvsFN->SetDirectory(dir2d);
+    _residualsFrameX.push_back(projXvsFN);
+
+    // Residual Y vs Framenumber
+    name.str(""); title.str("");
+    name << sensor->getDevice()->getName() << sensor->getName()
+         <<  "ResidualY_vs_Framenumber" << _nameSuffix;
+    title << sensor->getDevice()->getName() << " " << sensor->getName()
+          << " Residual Y vs Framenumber "
+          << ";Framenumber" 
+          << ";Y position [" << refDevice->getSpaceUnit() << "]"
+          << ";Tracks";
+    TH2D* projYvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
+			       250,0,400000,
+			       2.0*binsY*binsPerPix, -2.0*binsY*sensor->getPitchX(), 2.0*binsY*sensor->getPitchX());
+    
+    projYvsFN->SetDirectory(dir2d);
+    _residualsFrameY.push_back(projYvsFN);    
+
     for (unsigned int axis = 0; axis < 3; axis++)
     {
 // HP try
