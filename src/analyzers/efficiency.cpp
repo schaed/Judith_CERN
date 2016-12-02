@@ -981,7 +981,7 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";X position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* projXvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
-			       10000,0,200000,
+			       1000,0,400000,
 			       2.0*pixBinsX, -2.0*num_pixels*sensor->getPitchX(), 2.0*num_pixels*sensor->getPitchX() );
     
     projXvsFN->SetDirectory(plotDir);
@@ -998,7 +998,7 @@ Efficiency::Efficiency(const Mechanics::Device* refDevice,
           << ";Y position [" << _dutDevice->getSpaceUnit() << "]"
           << ";Tracks";
     TH2D* projYvsFN = new TH2D(name.str().c_str(), title.str().c_str(),
-			       10000,0,200000,
+			       1000,0,400000,
 			       2*pixBinsY, -2.0*num_pixels*sensor->getPitchY(), 2.0*num_pixels*sensor->getPitchY());
     
     projYvsFN->SetDirectory(plotDir);
