@@ -130,6 +130,9 @@ setPlotDefaults(ROOT)
 name='effx'
 xmin=-5.0
 xmax=45.0
+#name='30effx'
+#xmin=2.5
+#xmax=32.5
 
 f=ROOT.TFile.Open(name+'.root')
 can = f.Get('c1_n2')
@@ -169,7 +172,7 @@ for j in can.GetListOfPrimitives():
         if color==1:
             h=j.Clone()
             stat=j.Clone()
-            leg.AddEntry(j,'Syst. Unc.')
+            leg.AddEntry(j,'Stat. Unc.')
         else:
             j.SetFillStyle(3002)
             j.SetFillColor(1)
@@ -222,6 +225,14 @@ lc.SetTextFont(72)
 lc.SetTextSize(0.045)
 lc.SetTextColor(4)
 lc.Draw()
+
+
+lcp = ROOT.TLatex(0.65, 0.2, '50#mum Pitch')
+lcp.SetNDC()
+#lcp.SetTextFont(72)
+lcp.SetTextSize(0.055)
+lcp.SetTextColor(1)
+lcp.Draw()
 
 syststat.Draw('e2 same')
 stat.Draw(' same')
