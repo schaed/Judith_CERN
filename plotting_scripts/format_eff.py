@@ -128,11 +128,12 @@ def Style():
 
 setPlotDefaults(ROOT)
 name='effx'
-xmin=-5.0
-xmax=45.0
-#name='30effx'
-#xmin=2.5
-#xmax=32.5
+xmin_start=-5.0
+xmax_start=45.0
+irr_str='1e15 n_{eq}/cm^{2}'
+name='30effx'
+xmin_start=2.5
+xmax_start=32.5
 
 f=ROOT.TFile.Open(name+'.root')
 can = f.Get('c1_n2')
@@ -159,12 +160,10 @@ for j in can.GetListOfPrimitives():
         j.SetStats(0)
         print 'His:',j.GetName()
     if j.InheritsFrom("TGraphAsymmErrors"):
-        #j.SetStats(0)
         print 'err: ',j.GetName()
         j.SetLineColor(2)
     if j.InheritsFrom("TGraph"):
-        #j.SetStats(0)
-        j.GetXaxis().SetRangeUser(xmin,xmax)
+        j.GetXaxis().SetRangeUser(xmin_start,xmax_start)
         j.GetYaxis().SetRangeUser(0.75,1.01)        
         print 'reg',j.GetName()
         j.SetLineColor(color)
@@ -183,8 +182,53 @@ for j in can.GetListOfPrimitives():
             j.SetLineWidth(0)
             leg.AddEntry(j,'Stat.+Syst. Unc.')            
         color-=1
-        
-            
+
+bin_width = 2.0*syststat.GetErrorX(4)
+nbins = (xmax_start-xmin_start)/bin_width
+xmin=0.0
+xmax=xmax_start-xmin_start
+h1 = ROOT.TH1F('statsys','statsys',int(nbins),0.0,nbins*bin_width)
+hstat = ROOT.TH1F('stat','stat',int(nbins),0.0,nbins*bin_width)
+i=0
+x=ROOT.Double(-10000)
+y=ROOT.Double(0)
+while x<=xmin_start:
+    i+=1    
+    syststat.GetPoint(i,x,y)
+    
+for j in range(0,h1.GetNbinsX()+1):
+    syststat.GetPoint(i+j,x,y)
+    err = syststat.GetErrorYhigh(i+j)
+    errS = stat.GetErrorYhigh(i+j)    
+    h1.SetBinContent(j+1,y)
+    h1.SetBinError(j+1,err)
+    hstat.SetBinContent(j+1,y)
+    hstat.SetBinError(j+1,errS)
+    #print err,y
+    
+syststat_new = ROOT.TGraph(h1)
+h1.GetXaxis().SetTitle(syststat.GetXaxis().GetTitle())
+h1.GetYaxis().SetTitle(syststat.GetYaxis().GetTitle())
+h1.SetLineColor(1)
+h1.SetMarkerColor(1)
+h1.SetMarkerSize(0)
+h1.SetFillColor(1)
+h1.SetTitle("")
+h1.Draw('same e')
+
+h1.GetYaxis().SetRangeUser(0.75,1.01) 
+
+can = ROOT.TCanvas("c2","c2",100,10,700,500);
+can.Draw()
+h1.Draw()
+hstat.SetTitle("")
+hstat.SetLineColor(1)
+hstat.SetLineWidth(0)
+hstat.SetFillColor(1)
+hstat.SetFillStyle(3002)
+hstat.Draw('same e2')
+h1.Draw('same')
+
 line = ROOT.TLine(xmin,1.0,xmax,1.0)
 line.SetLineWidth(3)
 line.SetLineColor(1)
@@ -226,17 +270,20 @@ lc.SetTextSize(0.045)
 lc.SetTextColor(4)
 lc.Draw()
 
-
-lcp = ROOT.TLatex(0.65, 0.2, '50#mum Pitch')
+lcp = ROOT.TLatex(0.65, 0.2, '%s#mum Pitch' %(int(xmax-xmin)))
 lcp.SetNDC()
 #lcp.SetTextFont(72)
 lcp.SetTextSize(0.055)
 lcp.SetTextColor(1)
 lcp.Draw()
+lcr = ROOT.TLatex(0.65, 0.27, irr_str)
+lcr.SetNDC()
+lcr.SetTextSize(0.055)
+lcr.SetTextColor(1)
+lcr.Draw()
 
-syststat.Draw('e2 same')
-stat.Draw(' same')
-syststat
+#syststat.Draw('e2 same')
+#stat.Draw(' same')
 leg.Draw()
 
 can.Update()
