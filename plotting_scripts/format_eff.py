@@ -206,16 +206,17 @@ for j in range(0,h1.GetNbinsX()+1):
     hstat.SetBinError(j+1,errS)
     #print err,y
     
-syststat_new = ROOT.TGraph(h1)
 h1.GetXaxis().SetTitle(syststat.GetXaxis().GetTitle())
 h1.GetYaxis().SetTitle(syststat.GetYaxis().GetTitle())
 h1.SetLineColor(1)
 h1.SetMarkerColor(1)
 h1.SetMarkerSize(0)
+h1.SetLineWidth(0)
+h1.SetLineWidth(0)
 h1.SetFillColor(1)
+h1.SetFillStyle(3002)
 h1.SetTitle("")
 h1.Draw('same e')
-
 h1.GetYaxis().SetRangeUser(0.75,1.01) 
 
 can = ROOT.TCanvas("c2","c2",100,10,700,500);
@@ -223,11 +224,10 @@ can.Draw()
 h1.Draw()
 hstat.SetTitle("")
 hstat.SetLineColor(1)
-hstat.SetLineWidth(0)
-hstat.SetFillColor(1)
-hstat.SetFillStyle(3002)
-hstat.Draw('same e2')
-h1.Draw('same')
+hstat.SetMarkerColor(1)
+
+hstat.Draw('same ')
+h1.Draw('same e2')
 
 line = ROOT.TLine(xmin,1.0,xmax,1.0)
 line.SetLineWidth(3)
