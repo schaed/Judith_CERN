@@ -46,7 +46,7 @@ void SynchronizeBunchXing::loop()
 
   unsigned int refShift = 0;
   unsigned int dutShift = 0;
-
+  double BUNCHXINGTHR=5.0;
   // Some statistics for reporting
   ULong64_t singleRefOffsets = 0;
   ULong64_t multipleRefOffsets = 0;
@@ -64,6 +64,8 @@ void SynchronizeBunchXing::loop()
   ULong64_t numConsecutiveSyncs = 0;
   ULong64_t consecutiveFails = 0;
   ULong64_t consecutiveSyncs = 0;
+  std::set<unsigned> dut_frame;
+  
   // next we have a starting point that is aligned
   for (unsigned int nevent = _startEvent; nevent <= (_endEvent-1); ++nevent)
     {
@@ -72,9 +74,16 @@ void SynchronizeBunchXing::loop()
       // read in events
       Storage::Event* refEvent = _refStorage->readEvent(nevent+_eventSkip);
       Storage::Event* dutEvent = _dutStorage->readEvent(dutShift+nevent+_eventSkip);
-      Storage::Event* refEventPrev = _refStorage->readEvent(nevent+_eventSkip-1);
-      Storage::Event* dutEventPrev = _dutStorage->readEvent(dutShift+nevent+_eventSkip-1);	
+      if(dut_frame.find(dutEvent->getFrameNumber())!=dut_frame.end()){
+      	std::cout << "duplicate framenumber: " << dutEvent->getFrameNumber() << endl;
+      	++dutShift;
+      	dutEvent = _dutStorage->readEvent(dutShift+nevent+_eventSkip);
+      }
+      dut_frame.insert(dutEvent->getFrameNumber());
       
+      Storage::Event* refEventPrev = _refStorage->readEvent(nevent+_eventSkip-1);
+      Storage::Event* dutEventPrev = _dutStorage->readEvent(dutShift+nevent+_eventSkip-1);
+
       if(dutEvent->getInvalid()){
 	//std::cout << "Invalid Event DUT - skipping" << std::endl;
 	++invalidEventsDUT;
@@ -90,8 +99,9 @@ void SynchronizeBunchXing::loop()
       // 40MHz trigger
       double difft = (refEvent->getTimeStamp()-refEventPrev->getTimeStamp())/40.0e6;
       double diffd = (dutEvent->getTimeStamp()-dutEventPrev->getTimeStamp())/1.0e5;
-      if(difft>1.0){// telescope has a new bunch
-	if(diffd>1.0){
+      //std::cout << "difft: " << difft << " dut: " << diffd<< std::endl;
+      if(difft>BUNCHXINGTHR){// telescope has a new bunch
+	if(diffd>BUNCHXINGTHR){
 	  // all good 
 	  //DUTLastBunchXing=nevent
 	}
@@ -111,7 +121,7 @@ void SynchronizeBunchXing::loop()
 	    double diffd_TMP = (dutSearch->getTimeStamp()-dutSearchPrev->getTimeStamp())/1.0e5;
 	    // clean
 	    delete dutSearchPrev;
-	    if(diffd_TMP>1.0){
+	    if(diffd_TMP>BUNCHXINGTHR){
 	      std::cout << "diffd_TMP: " << diffd_TMP << std::endl;
 	      //diffd = (edut_e[i+nDUT][0]-edut_e[nDUT+i-1][0])/1.0e5;
 	      delete dutEvent;
