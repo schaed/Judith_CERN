@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <vector>
+#include <set>
 #include <iostream>
 #include <math.h>
 #include <string>
